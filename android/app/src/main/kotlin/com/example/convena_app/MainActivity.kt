@@ -1,4 +1,4 @@
-package com.example.convena_app
+package com.example.convena
 
 import io.flutter.embedding.android.FlutterActivity
 
