@@ -1,7 +1,19 @@
+import 'package:convena/pages/auth_page.dart';
+import 'package:convena/services/theme_services.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const App());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => ThemeService(prefs))],
+      child: const App(),
+    ),
+  );
 }
 
 class App extends StatelessWidget {
@@ -9,54 +21,15 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = context.watch<ThemeService>();
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Convena',
-      home: const HomePage(title: 'Convena'),
-    );
-  }
-}
-
-class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
-  final String title;
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+      theme: ThemeData(
+        fontFamily: 'Inter',
+        brightness: theme.isDark ? Brightness.dark : Brightness.light,
+        scaffoldBackgroundColor: theme.colors.bg,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      home: AuthPage(),
     );
   }
 }
