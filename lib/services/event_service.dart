@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import '../models/event.dart';
+import 'api_config.dart';
 
 class EventService extends ChangeNotifier {
   List<Event> _events = [];
@@ -13,12 +16,7 @@ class EventService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  static String get baseUrl {
-    if (!kIsWeb && Platform.isAndroid) {
-      return 'http://10.0.2.2:6969';
-    }
-    return 'http://127.0.0.1:6969';
-  }
+  static String get baseUrl => ApiConfig.baseUrl;
 
   /// Fetch live events directly from the API endpoint. No mock fallbacks.
   Future<List<Event>> fetchEvents({String? category, String? search}) async {
@@ -28,16 +26,18 @@ class EventService extends ChangeNotifier {
 
     try {
       final queryParams = <String, String>{};
-      if (category != null && category.isNotEmpty && category.toLowerCase() != 'semua') {
+      if (category != null &&
+          category.isNotEmpty &&
+          category.toLowerCase() != 'semua') {
         queryParams['category'] = category.toLowerCase();
       }
       if (search != null && search.trim().isNotEmpty) {
         queryParams['search'] = search.trim();
       }
 
-      final uri = Uri.parse('$baseUrl/api/events').replace(
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
-      );
+      final uri = Uri.parse(
+        '$baseUrl/api/events',
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
       final response = await http
           .get(uri, headers: {'Accept': 'application/json'})
@@ -51,16 +51,21 @@ class EventService extends ChangeNotifier {
               .toList();
 
           // Client-side search & category filtering as backup if API returns all
-          if (category != null && category.isNotEmpty && category.toLowerCase() != 'semua') {
+          if (category != null &&
+              category.isNotEmpty &&
+              category.toLowerCase() != 'semua') {
             _events = _events
-                .where((e) => e.category.toLowerCase() == category.toLowerCase())
+                .where(
+                  (e) => e.category.toLowerCase() == category.toLowerCase(),
+                )
                 .toList();
           }
           if (search != null && search.trim().isNotEmpty) {
             final query = search.trim().toLowerCase();
             _events = _events.where((e) {
               return e.title.toLowerCase().contains(query) ||
-                  (e.shortDescription?.toLowerCase().contains(query) ?? false) ||
+                  (e.shortDescription?.toLowerCase().contains(query) ??
+                      false) ||
                   (e.city?.toLowerCase().contains(query) ?? false);
             }).toList();
           }
@@ -79,7 +84,8 @@ class EventService extends ChangeNotifier {
         throw Exception(errorMsg);
       }
     } on SocketException catch (_) {
-      final errorMsg = 'Tidak dapat terhubung ke server API di $baseUrl. Pastikan server aktif.';
+      final errorMsg =
+          'Tidak dapat terhubung ke server API di $baseUrl. Pastikan server aktif.';
       _errorMessage = errorMsg;
       _isLoading = false;
       notifyListeners();

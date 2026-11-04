@@ -228,7 +228,7 @@ class _AuthPageState extends State<AuthPage> {
           label,
           style: const TextStyle(
             color: AppColors.grey,
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -465,7 +465,6 @@ class _AuthPageState extends State<AuthPage> {
       ],
     );
   }
-
 }
 
 /// Ambient glow background at the bottom of the auth screen
