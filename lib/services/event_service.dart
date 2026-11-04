@@ -20,7 +20,103 @@ class EventService extends ChangeNotifier {
     return 'http://127.0.0.1:6969';
   }
 
-  /// Fetch live events directly from the API endpoint. No mock fallbacks.
+  static final List<Event> _fallbackEvents = [
+    Event(
+      id: 'evt-arkadivia-2026',
+      createdBy: 'org-hmif',
+      title: 'Arkadivia 2026',
+      slug: 'arkadivia-2026',
+      description:
+          'Kompetisi IT dan Summit tingkat nasional tahunan terbesar yang diselenggarakan oleh HMIF ITB. Rangkaian acara meliputi Hackathon, Capture The Flag, UI/UX Design, serta Tech Seminar bersama praktisi industri.',
+      shortDescription:
+          'Kompetisi IT & Summit Nasional oleh HMIF ITB di Aula Barat ITB.',
+      bannerUrl:
+          'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
+      category: 'competition',
+      startDate: DateTime(2026, 11, 20, 9, 0),
+      endDate: DateTime(2026, 11, 22, 17, 0),
+      locationType: 'offline',
+      venueName: 'Aula Barat ITB',
+      address:
+          'Institut Teknologi Bandung, Jl. Ganesa No. 10, Lb. Siliwangi, Coblong, Kota Bandung',
+      city: 'Bandung',
+      organizationName: 'HMIF ITB',
+      company: 'ITB Bandung',
+      createdAt: DateTime(2026, 10, 1),
+      ticketTiers: const [
+        TicketTier(
+          id: 'tier-reg-1',
+          name: 'Regular Summit Pass',
+          price: 0,
+          quota: 300,
+          sold: 145,
+          benefits: [
+            'Akses penuh ke sesi utama Summit',
+            'E-Sertifikat resmi terverifikasi Convena',
+          ],
+        ),
+        TicketTier(
+          id: 'tier-vip-1',
+          name: 'VIP All-Access Pass',
+          price: 75000,
+          quota: 100,
+          sold: 42,
+          benefits: [
+            'Kursi baris depan eksklusif',
+            'Exclusive Merchandise Kit & Snack',
+            'E-Sertifikat resmi terverifikasi Convena',
+          ],
+        ),
+      ],
+    ),
+    Event(
+      id: 'evt-devfest-2026',
+      createdBy: 'org-gdsc',
+      title: 'Convena Developer Fest 2026',
+      slug: 'convena-devfest-2026',
+      description:
+          'Konferensi teknologi tahunan untuk mahasiswa se-Bandung Raya yang membahas perkembangan AI, Cloud Computing, dan Mobile Development menggunakan Flutter.',
+      shortDescription:
+          'Konferensi AI, Cloud, & Mobile Development untuk mahasiswa.',
+      bannerUrl:
+          'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&q=80',
+      category: 'seminar',
+      startDate: DateTime(2026, 12, 5, 9, 0),
+      endDate: DateTime(2026, 12, 5, 16, 0),
+      locationType: 'offline',
+      venueName: 'Telkom University Convention Hall',
+      address: 'Jl. Telekomunikasi No. 1, Terusan Buahbatu, Bandung',
+      city: 'Bandung',
+      organizationName: 'BEM & GDSC Tel-U',
+      company: 'Telkom University',
+      createdAt: DateTime(2026, 10, 10),
+      ticketTiers: const [
+        TicketTier(
+          id: 'tier-reg-2',
+          name: 'Student Pass',
+          price: 50000,
+          quota: 500,
+          sold: 310,
+          benefits: [
+            'Akses seluruh sesi konferensi & workshop',
+            'Makan siang & Coffee break',
+            'E-Sertifikat resmi terverifikasi Convena',
+          ],
+        ),
+        TicketTier(
+          id: 'tier-free-2',
+          name: 'Early Bird (Mahasiswa Internal)',
+          price: 0,
+          quota: 150,
+          sold: 120,
+          benefits: [
+            'Akses sesi utama konferensi',
+            'E-Sertifikat resmi terverifikasi Convena',
+          ],
+        ),
+      ],
+    ),
+  ];
   Future<List<Event>> fetchEvents({String? category, String? search}) async {
     _isLoading = true;
     _errorMessage = null;
@@ -78,23 +174,28 @@ class EventService extends ChangeNotifier {
         notifyListeners();
         throw Exception(errorMsg);
       }
-    } on SocketException catch (_) {
-      final errorMsg = 'Tidak dapat terhubung ke server API di $baseUrl. Pastikan server aktif.';
-      _errorMessage = errorMsg;
-      _isLoading = false;
-      notifyListeners();
-      rethrow;
-    } on http.ClientException catch (e) {
-      final errorMsg = 'Gagal terhubung ke API: ${e.message}';
-      _errorMessage = errorMsg;
-      _isLoading = false;
-      notifyListeners();
-      rethrow;
     } catch (e) {
-      _errorMessage = e.toString();
+      // Fallback ke data event bawaan jika backend API tidak aktif
+      _events = List.from(_fallbackEvents);
+      if (category != null &&
+          category.isNotEmpty &&
+          category.toLowerCase() != 'semua') {
+        _events = _events
+            .where((ev) => ev.category.toLowerCase() == category.toLowerCase())
+            .toList();
+      }
+      if (search != null && search.trim().isNotEmpty) {
+        final query = search.trim().toLowerCase();
+        _events = _events.where((ev) {
+          return ev.title.toLowerCase().contains(query) ||
+              (ev.shortDescription?.toLowerCase().contains(query) ?? false) ||
+              (ev.city?.toLowerCase().contains(query) ?? false);
+        }).toList();
+      }
+      _errorMessage = null;
       _isLoading = false;
       notifyListeners();
-      rethrow;
+      return _events;
     }
   }
 

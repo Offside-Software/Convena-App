@@ -1,5 +1,6 @@
 import 'package:convena/components/components.dart';
 import 'package:convena/models/event.dart';
+import 'package:convena/pages/home_page.dart';
 import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -664,7 +665,11 @@ class _PaymentPageState extends State<PaymentPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx); // Close dialog
-              Navigator.pop(context); // Back to previous page
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const HomePage()),
+                (route) => false,
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accent,
