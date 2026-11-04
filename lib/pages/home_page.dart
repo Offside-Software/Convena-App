@@ -1,5 +1,7 @@
 import 'package:convena/components/components.dart';
 import 'package:convena/models/user.dart';
+import 'package:convena/pages/auth_page.dart';
+import 'package:convena/pages/certification_page.dart';
 import 'package:convena/pages/event_detail_page.dart';
 import 'package:convena/pages/event_map_page.dart';
 import 'package:convena/services/auth_service.dart';
@@ -13,21 +15,28 @@ import 'package:provider/provider.dart';
 class HomePage extends StatefulWidget {
   final User? user;
   final AuthService? auth;
+  final int initialIndex;
 
-  const HomePage({super.key, this.user, this.auth});
+  const HomePage({
+    super.key,
+    this.user,
+    this.auth,
+    this.initialIndex = 0,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   String _selectedCategory = 'Semua';
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadEvents();
     });
@@ -81,15 +90,13 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: AppColors.black,
       appBar: _buildTopBarForCurrentTab(),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildHomeTab(displayName, currentUser, authService),
-          _buildQRScanTab(),
-          const EventMapPage(showBottomNavBar: false),
-          _buildProfileTab(currentUser, authService),
-        ],
-      ),
+      body: switch (_currentIndex) {
+        0 => _buildHomeTab(displayName, currentUser, authService),
+        1 => _buildQRScanTab(),
+        2 => const EventMapPage(showBottomNavBar: false),
+        3 => _buildProfileTab(currentUser, authService),
+        _ => _buildHomeTab(displayName, currentUser, authService),
+      },
       bottomNavigationBar: ConvenaBottomNavBar(
         currentIndex: _currentIndex,
         onTap: _onTabSelected,
@@ -266,6 +273,76 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 14),
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CertificatePage(),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.grey3,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.grey2.withValues(alpha: 0.6),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.black,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.verified_user_rounded,
+                        color: AppColors.accent,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Verifikasi E-Sertifikat',
+                            style: GoogleFonts.montserrat(
+                              color: AppColors.white,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Cek keaslian sertifikat acara mahasiswa',
+                            style: GoogleFonts.montserrat(
+                              color: AppColors.grey,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: AppColors.grey,
+                      size: 14,
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -982,6 +1059,12 @@ class _HomePageState extends State<HomePage> {
 
                 if (confirm == true) {
                   await authService.logout();
+                  if (mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const AuthPage()),
+                      (route) => false,
+                    );
+                  }
                 }
               },
               icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
