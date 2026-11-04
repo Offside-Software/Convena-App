@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/user.dart';
+import 'api_config.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -33,21 +36,16 @@ class AuthService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  static String get baseUrl {
-    // Android emulator cannot access 127.0.0.1 (it refers to the emulator itself)
-    // 10.0.2.2 maps to host machine localhost
-    if (!kIsWeb && Platform.isAndroid) {
-      return 'http://10.0.2.2:6969';
-    }
-    return 'http://127.0.0.1:6969';
-  }
+  static String get baseUrl => ApiConfig.baseUrl;
 
   void _loadFromPrefs() {
     _token = _prefs.getString('auth_token');
     final userRaw = _prefs.getString('auth_user');
     if (userRaw != null) {
       try {
-        _currentUser = User.fromJson(jsonDecode(userRaw) as Map<String, dynamic>);
+        _currentUser = User.fromJson(
+          jsonDecode(userRaw) as Map<String, dynamic>,
+        );
       } catch (e) {
         _currentUser = null;
       }
@@ -81,7 +79,9 @@ class AuthService extends ChangeNotifier {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        final authResponse = AuthResponse.fromJson(data as Map<String, dynamic>);
+        final authResponse = AuthResponse.fromJson(
+          data as Map<String, dynamic>,
+        );
         _token = authResponse.token;
         _currentUser = authResponse.user;
 
@@ -93,7 +93,9 @@ class AuthService extends ChangeNotifier {
         final msg = data is Map && data['message'] != null
             ? data['message'].toString()
             : 'Login gagal (${response.statusCode})';
-        final code = data is Map && data['code'] != null ? data['code'].toString() : null;
+        final code = data is Map && data['code'] != null
+            ? data['code'].toString()
+            : null;
         _errorMessage = msg;
         _isLoading = false;
         notifyListeners();
@@ -149,7 +151,9 @@ class AuthService extends ChangeNotifier {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
-        final authResponse = AuthResponse.fromJson(data as Map<String, dynamic>);
+        final authResponse = AuthResponse.fromJson(
+          data as Map<String, dynamic>,
+        );
         _token = authResponse.token;
         _currentUser = authResponse.user;
 
@@ -161,7 +165,9 @@ class AuthService extends ChangeNotifier {
         final msg = data is Map && data['message'] != null
             ? data['message'].toString()
             : 'Registrasi gagal (${response.statusCode})';
-        final code = data is Map && data['code'] != null ? data['code'].toString() : null;
+        final code = data is Map && data['code'] != null
+            ? data['code'].toString()
+            : null;
         _errorMessage = msg;
         _isLoading = false;
         notifyListeners();

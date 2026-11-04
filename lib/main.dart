@@ -44,7 +44,7 @@ class App extends StatelessWidget {
         textTheme: GoogleFonts.montserratTextTheme(baseTextTheme),
         primaryTextTheme: GoogleFonts.montserratTextTheme(baseTextTheme),
       ),
-      home: HomePage(),
+      home: auth.isAuthenticated ? const HomePage() : const AuthPage(),
     );
   }
 }
