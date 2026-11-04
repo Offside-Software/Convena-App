@@ -1,6 +1,6 @@
 import 'package:convena/components/components.dart';
 import 'package:convena/models/event.dart';
-import 'package:convena/pages/payment_page.dart';
+import 'package:convena/pages/registration_page.dart';
 import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -45,7 +45,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     return Scaffold(
       backgroundColor: AppColors.black,
       appBar: ConvenaTopBar.withBack(
-        label: 'Detail Event',
+        label: 'Dashboard',
         onBackPressed: () => Navigator.pop(context),
       ),
       body: SingleChildScrollView(
@@ -427,7 +427,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => PaymentPage(
+                      builder: (context) => RegistrationPage(
                         event: event,
                         selectedTier: _selectedTier,
                       ),
@@ -443,7 +443,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ),
                 ),
                 child: Text(
-                  'Lanjut Beli Tiket',
+                  'Registrasi',
                   style: GoogleFonts.montserrat(
                     color: AppColors.black,
                     fontSize: 14,
