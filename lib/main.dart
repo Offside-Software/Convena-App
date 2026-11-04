@@ -1,5 +1,7 @@
 import 'package:convena/pages/auth_page.dart';
+import 'package:convena/pages/home_page.dart';
 import 'package:convena/services/auth_service.dart';
+import 'package:convena/services/event_service.dart';
 import 'package:convena/services/theme_services.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,6 +17,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeService(prefs)),
         ChangeNotifierProvider(create: (_) => AuthService(prefs)),
+        ChangeNotifierProvider(create: (_) => EventService()),
       ],
       child: const App(),
     ),
@@ -27,6 +30,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeService>();
+    final auth = context.watch<AuthService>();
     final baseTextTheme = theme.isDark
         ? ThemeData.dark().textTheme
         : ThemeData.light().textTheme;
@@ -40,7 +44,7 @@ class App extends StatelessWidget {
         textTheme: GoogleFonts.montserratTextTheme(baseTextTheme),
         primaryTextTheme: GoogleFonts.montserratTextTheme(baseTextTheme),
       ),
-      home: const AuthPage(),
+      home: auth.isAuthenticated ? const HomePage() : const AuthPage(),
     );
   }
 }

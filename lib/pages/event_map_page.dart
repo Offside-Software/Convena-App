@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
+
 import '../models/event_location.dart';
 
-class EventMapScreen extends StatefulWidget {
+class EventMapPage extends StatefulWidget {
   final EventLocation? eventLocation;
   final List<EventLocation>? events;
 
-  const EventMapScreen({
-    super.key,
-    this.eventLocation,
-    this.events,
-  });
+  const EventMapPage({super.key, this.eventLocation, this.events});
 
   @override
-  State<EventMapScreen> createState() => _EventMapScreenState();
+  State<EventMapPage> createState() => _EventMapPageState();
 }
 
-class _EventMapScreenState extends State<EventMapScreen> {
+class _EventMapPageState extends State<EventMapPage> {
   late final MapController _mapController;
 
   late List<EventLocation> _allEvents;
@@ -45,27 +42,28 @@ class _EventMapScreenState extends State<EventMapScreen> {
     _mapController = MapController();
 
     // Dummy Data
-    _allEvents = widget.events ??
+    _allEvents =
+        widget.events ??
         [
           const EventLocation(
             eventTitle: 'Arkadivia 2026',
             venueName: 'Aula Barat ITB, Bandung',
-            address:
-                'Institut Teknologi Bandung, Jl. Ganesa No. 10, Lb. Siliwangi, Coblong, Kota Bandung',
+            address: 'Institut Teknologi Bandung, Jl. Ganesa No. 10, Lb. Siliwangi, Coblong, Kota Bandung',
             latitude: -6.8915,
             longitude: 107.6107,
             distance: '850 m',
             category: 'IT Competition & Summit',
-            imageUrl:
-                'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&q=80',
+            imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&q=80',
           ),
         ];
 
     // Jika ada event custom dari parameter, sisipkan di posisi teratas
     if (widget.eventLocation != null) {
-      final exists = _allEvents.any((e) =>
-          e.latitude == widget.eventLocation!.latitude &&
-          e.longitude == widget.eventLocation!.longitude);
+      final exists = _allEvents.any(
+        (e) =>
+            e.latitude == widget.eventLocation!.latitude &&
+            e.longitude == widget.eventLocation!.longitude,
+      );
       if (!exists) {
         _allEvents.insert(0, widget.eventLocation!);
       }
@@ -118,14 +116,16 @@ class _EventMapScreenState extends State<EventMapScreen> {
                 TileLayer(
                   // URL Template resmi OpenStreetMap: https://tile.openstreetmap.org/{z}/{x}/{y}.png
                   urlTemplate: _osmOfficialUrl,
-                  userAgentPackageName: 'com.example.convena_app',
+                  userAgentPackageName: 'com.example.convena',
                   maxNativeZoom: 19,
                   errorTileCallback: (tile, error, stackTrace) {
-                    debugPrint('[OSM TileLayer] Gagal mengunduh ubin peta: $error');
+                    debugPrint(
+                      '[OSM TileLayer] Gagal mengunduh ubin peta: $error',
+                    );
                   },
                 ),
 
-                // Marker 
+                // Marker
                 MarkerLayer(
                   markers: _filteredEvents.map((event) {
                     final isSelected = event == _selectedEvent;
@@ -149,9 +149,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
 
                 const RichAttributionWidget(
                   attributions: [
-                    TextSourceAttribution(
-                      '© OpenStreetMap contributors',
-                    ),
+                    TextSourceAttribution('© OpenStreetMap contributors'),
                   ],
                 ),
               ],
@@ -215,11 +213,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
                   //location header
                   const Row(
                     children: [
-                      Icon(
-                        Icons.location_on,
-                        color: _neonLime,
-                        size: 15,
-                      ),
+                      Icon(Icons.location_on, color: _neonLime, size: 15),
                       SizedBox(width: 4),
                       Text(
                         'ITB Ganesha, Bandung',
@@ -239,10 +233,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
                     decoration: BoxDecoration(
                       color: _inputDark,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: _cardBorderDark,
-                        width: 1,
-                      ),
+                      border: Border.all(color: _cardBorderDark, width: 1),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: const Row(
@@ -284,10 +275,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
                 decoration: BoxDecoration(
                   color: _inputDark,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _cardBorderDark,
-                    width: 1.2,
-                  ),
+                  border: Border.all(color: _cardBorderDark, width: 1.2),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.4),
@@ -299,11 +287,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.near_me_rounded,
-                      color: Colors.white,
-                      size: 15,
-                    ),
+                    Icon(Icons.near_me_rounded, color: Colors.white, size: 15),
                     SizedBox(width: 6),
                     Text(
                       'Near me',
@@ -338,10 +322,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
       decoration: BoxDecoration(
         color: _surfaceDark,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: _cardBorderDark,
-          width: 1.2,
-        ),
+        border: Border.all(color: _cardBorderDark, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.6),
@@ -359,8 +340,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
               height: 66,
               color: const Color(0xFF262832),
               child: Image.network(
-                event.imageUrl ??
-                    'https://images.unsplash.com/photo-1511578314322-379afb476865?w=300&q=80',
+                event.imageUrl ?? 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=300&q=80',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
@@ -401,19 +381,12 @@ class _EventMapScreenState extends State<EventMapScreen> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
-                      Icons.location_on,
-                      color: _neonLime,
-                      size: 13,
-                    ),
+                    const Icon(Icons.location_on, color: _neonLime, size: 13),
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
                         event.venueName,
-                        style: const TextStyle(
-                          color: _textMuted,
-                          fontSize: 12,
-                        ),
+                        style: const TextStyle(color: _textMuted, fontSize: 12),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -431,10 +404,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
                     const SizedBox(width: 4),
                     Text(
                       event.distance,
-                      style: const TextStyle(
-                        color: _textMuted,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: _textMuted, fontSize: 12),
                     ),
                   ],
                 ),
@@ -447,10 +417,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
           GestureDetector(
             onTap: () {},
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: _neonLime,
                 borderRadius: BorderRadius.circular(20),
@@ -488,7 +455,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
     );
   }
 
-  //Navbar Bottom 
+  //Navbar Bottom
   Widget _buildBottomNavigationBar() {
     return Container(
       padding: EdgeInsets.only(
@@ -499,12 +466,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
       ),
       decoration: const BoxDecoration(
         color: Color(0xFF000000),
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFF16181F),
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: Color(0xFF16181F), width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -512,11 +474,8 @@ class _EventMapScreenState extends State<EventMapScreen> {
           //Home
           _buildNavItem(
             index: 0,
-            customIcon: (color) => Icon(
-              Icons.home_outlined,
-              color: color,
-              size: 26,
-            ),
+            customIcon: (color) =>
+                Icon(Icons.home_outlined, color: color, size: 26),
             onTap: () {},
           ),
 
@@ -531,11 +490,7 @@ class _EventMapScreenState extends State<EventMapScreen> {
                 border: Border.all(color: color, width: 1.8),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Icon(
-                Icons.qr_code_2_rounded,
-                color: color,
-                size: 17,
-              ),
+              child: Icon(Icons.qr_code_2_rounded, color: color, size: 17),
             ),
             onTap: () {},
           ),
@@ -543,11 +498,8 @@ class _EventMapScreenState extends State<EventMapScreen> {
           // search/map
           _buildNavItem(
             index: 2,
-            customIcon: (color) => Icon(
-              Icons.search_rounded,
-              color: color,
-              size: 26,
-            ),
+            customIcon: (color) =>
+                Icon(Icons.search_rounded, color: color, size: 26),
             onTap: () {
               setState(() => _currentNavIndex = 2);
             },
@@ -556,11 +508,8 @@ class _EventMapScreenState extends State<EventMapScreen> {
           // profile
           _buildNavItem(
             index: 3,
-            customIcon: (color) => Icon(
-              Icons.person_outline_rounded,
-              color: color,
-              size: 26,
-            ),
+            customIcon: (color) =>
+                Icon(Icons.person_outline_rounded, color: color, size: 26),
             onTap: () {},
           ),
         ],
@@ -599,10 +548,7 @@ class _EventPinMarker extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _EventPinMarker({
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _EventPinMarker({required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -645,11 +591,7 @@ class _PinPainter extends CustomPainter {
 
     final path = Path()
       ..moveTo(0, r)
-      ..arcToPoint(
-        Offset(w, r),
-        radius: Radius.circular(r),
-        clockwise: true,
-      )
+      ..arcToPoint(Offset(w, r), radius: Radius.circular(r), clockwise: true)
       ..quadraticBezierTo(w * 0.9, h * 0.65, w / 2, h)
       ..quadraticBezierTo(w * 0.1, h * 0.65, 0, r)
       ..close();
