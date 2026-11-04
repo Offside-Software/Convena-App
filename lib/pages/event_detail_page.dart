@@ -1,5 +1,7 @@
 import 'package:convena/components/components.dart';
 import 'package:convena/models/event.dart';
+import 'package:convena/models/event_location.dart';
+import 'package:convena/pages/event_map_page.dart';
 import 'package:convena/pages/registration_page.dart';
 import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
@@ -210,30 +212,57 @@ class _EventDetailPageState extends State<EventDetailPage> {
                           ],
                         ),
                         const Divider(color: AppColors.grey2, height: 20),
-                        Row(
-                          children: [
-                            const Icon(Icons.place_rounded, color: AppColors.accent, size: 20),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Lokasi',
-                                    style: GoogleFonts.montserrat(color: AppColors.grey, fontSize: 11),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (ctx) => EventMapPage(
+                                  eventLocation: EventLocation(
+                                    eventTitle: event.title,
+                                    venueName: event.displayLocation,
+                                    address: event.address ?? event.displayLocation,
+                                    latitude: -6.8915,
+                                    longitude: 107.6107,
+                                    distance: '850 m',
+                                    category: event.category,
+                                    imageUrl: event.bannerUrl,
                                   ),
-                                  Text(
-                                    event.displayLocation,
-                                    style: GoogleFonts.montserrat(
-                                      color: AppColors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ],
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.place_rounded, color: AppColors.accent, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Lokasi (Ketuk untuk buka Peta)',
+                                      style: GoogleFonts.montserrat(color: AppColors.grey, fontSize: 11),
+                                    ),
+                                    Text(
+                                      event.displayLocation,
+                                      style: GoogleFonts.montserrat(
+                                        color: AppColors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.map_outlined,
+                                color: AppColors.accent,
+                                size: 18,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

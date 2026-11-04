@@ -1,14 +1,26 @@
+import 'package:convena/components/bottom_nav_bar.dart';
+import 'package:convena/models/event.dart';
+import 'package:convena/pages/event_detail_page.dart';
+import 'package:convena/pages/home_page.dart';
+import 'package:convena/services/event_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
+import 'package:provider/provider.dart';
 
 import '../models/event_location.dart';
 
 class EventMapPage extends StatefulWidget {
   final EventLocation? eventLocation;
   final List<EventLocation>? events;
+  final bool showBottomNavBar;
 
-  const EventMapPage({super.key, this.eventLocation, this.events});
+  const EventMapPage({
+    super.key,
+    this.eventLocation,
+    this.events,
+    this.showBottomNavBar = true,
+  });
 
   @override
   State<EventMapPage> createState() => _EventMapPageState();
@@ -16,6 +28,7 @@ class EventMapPage extends StatefulWidget {
 
 class _EventMapPageState extends State<EventMapPage> {
   late final MapController _mapController;
+  final TextEditingController _searchController = TextEditingController();
 
   late List<EventLocation> _allEvents;
   late List<EventLocation> _filteredEvents;
@@ -48,12 +61,25 @@ class _EventMapPageState extends State<EventMapPage> {
           const EventLocation(
             eventTitle: 'Arkadivia 2026',
             venueName: 'Aula Barat ITB, Bandung',
-            address: 'Institut Teknologi Bandung, Jl. Ganesa No. 10, Lb. Siliwangi, Coblong, Kota Bandung',
+            address:
+                'Institut Teknologi Bandung, Jl. Ganesa No. 10, Lb. Siliwangi, Coblong, Kota Bandung',
             latitude: -6.8915,
             longitude: 107.6107,
             distance: '850 m',
-            category: 'IT Competition & Summit',
-            imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&q=80',
+            category: 'competition',
+            imageUrl:
+                'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&q=80',
+          ),
+          const EventLocation(
+            eventTitle: 'Convena Developer Fest 2026',
+            venueName: 'Telkom University Convention Hall',
+            address: 'Jl. Telekomunikasi No. 1, Terusan Buahbatu, Bandung',
+            latitude: -6.9733,
+            longitude: 107.6305,
+            distance: '4.2 km',
+            category: 'seminar',
+            imageUrl:
+                'https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&q=80',
           ),
         ];
 
@@ -78,16 +104,49 @@ class _EventMapPageState extends State<EventMapPage> {
   @override
   void dispose() {
     _mapController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    final q = query.trim().toLowerCase();
+    setState(() {
+      if (q.isEmpty) {
+        _filteredEvents = List.from(_allEvents);
+      } else {
+        _filteredEvents = _allEvents.where((e) {
+          return e.eventTitle.toLowerCase().contains(q) ||
+              e.venueName.toLowerCase().contains(q) ||
+              e.address.toLowerCase().contains(q) ||
+              (e.category?.toLowerCase().contains(q) ?? false);
+        }).toList();
+      }
+      if (_filteredEvents.isNotEmpty) {
+        _selectedEvent = _filteredEvents.first;
+        _mapController.move(_selectedEvent.coordinates, _defaultZoom);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.showBottomNavBar) {
+      return _buildMapContent();
+    }
     return Scaffold(
       backgroundColor: _bgDark,
       resizeToAvoidBottomInset: false,
       body: _buildMapContent(),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: ConvenaBottomNavBar(
+        currentIndex: _currentNavIndex,
+        onTap: (index) {
+          if (index == _currentNavIndex) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => HomePage(initialIndex: index)),
+            (route) => false,
+          );
+        },
+      ),
     );
   }
 
@@ -236,20 +295,31 @@ class _EventMapPageState extends State<EventMapPage> {
                       border: Border.all(color: _cardBorderDark, width: 1),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.search_rounded,
                           color: Color(0xFF7E808C),
                           size: 20,
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Expanded(
-                          child: Text(
-                            'Cari event atau lokasi',
-                            style: TextStyle(
-                              color: Color(0xFF7E808C),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: _onSearchChanged,
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 14,
+                            ),
+                            cursorColor: _neonLime,
+                            decoration: const InputDecoration(
+                              hintText: 'Cari event atau lokasi',
+                              hintStyle: TextStyle(
+                                color: Color(0xFF7E808C),
+                                fontSize: 14,
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
                             ),
                           ),
                         ),
@@ -266,7 +336,9 @@ class _EventMapPageState extends State<EventMapPage> {
             top: MediaQuery.of(context).padding.top + 130,
             right: 20,
             child: GestureDetector(
-              onTap: () {},
+              onTap: () {
+                _mapController.move(_bandungCenter, _defaultZoom);
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
@@ -415,7 +487,62 @@ class _EventMapPageState extends State<EventMapPage> {
 
           //button liat event
           GestureDetector(
-            onTap: () {},
+            onTap: () {
+              final eventService = context.read<EventService>();
+              final matched = eventService.events.where(
+                (e) => e.title.toLowerCase() == event.eventTitle.toLowerCase(),
+              );
+              final targetEvent = matched.isNotEmpty
+                  ? matched.first
+                  : Event(
+                      id: 'evt-map-1',
+                      createdBy: 'org-1',
+                      title: event.eventTitle,
+                      slug: event.eventTitle.toLowerCase().replaceAll(' ', '-'),
+                      description:
+                          'Acara ${event.eventTitle} diselenggarakan di ${event.venueName} (${event.address}). Ikuti keseruan rangkaian kegiatan ini dan dapatkan E-Sertifikat resmi.',
+                      bannerUrl: event.imageUrl,
+                      category: event.category ?? 'IT Competition & Summit',
+                      startDate: DateTime.now().add(const Duration(days: 7)),
+                      endDate: DateTime.now().add(const Duration(days: 8)),
+                      venueName: event.venueName,
+                      address: event.address,
+                      city: 'Bandung',
+                      organizationName: 'HMIF ITB & Convena',
+                      company: 'ITB Bandung',
+                      createdAt: DateTime.now(),
+                      ticketTiers: const [
+                        TicketTier(
+                          id: 'tier-reg',
+                          name: 'Regular Pass',
+                          price: 0,
+                          quota: 250,
+                          benefits: [
+                            'Akses penuh ke area utama acara',
+                            'E-Sertifikat resmi terverifikasi Convena',
+                          ],
+                        ),
+                        TicketTier(
+                          id: 'tier-vip',
+                          name: 'VIP Summit Pass',
+                          price: 75000,
+                          quota: 50,
+                          benefits: [
+                            'Kursi baris depan eksklusif',
+                            'Merchandise kit & konsumsi',
+                            'E-Sertifikat resmi terverifikasi Convena',
+                          ],
+                        ),
+                      ],
+                    );
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EventDetailPage(event: targetEvent),
+                ),
+              );
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
@@ -476,7 +603,12 @@ class _EventMapPageState extends State<EventMapPage> {
             index: 0,
             customIcon: (color) =>
                 Icon(Icons.home_outlined, color: color, size: 26),
-            onTap: () {},
+            onTap: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 0)),
+                (route) => false,
+              );
+            },
           ),
 
           //QR
@@ -492,7 +624,12 @@ class _EventMapPageState extends State<EventMapPage> {
               ),
               child: Icon(Icons.qr_code_2_rounded, color: color, size: 17),
             ),
-            onTap: () {},
+            onTap: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 1)),
+                (route) => false,
+              );
+            },
           ),
 
           // search/map
@@ -510,7 +647,12 @@ class _EventMapPageState extends State<EventMapPage> {
             index: 3,
             customIcon: (color) =>
                 Icon(Icons.person_outline_rounded, color: color, size: 26),
-            onTap: () {},
+            onTap: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 3)),
+                (route) => false,
+              );
+            },
           ),
         ],
       ),

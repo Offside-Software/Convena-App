@@ -1,3 +1,4 @@
+import 'package:convena/components/components.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // Import package Google Fonts
 import 'package:convena/theme.dart'; // Import file theme.dart
@@ -20,37 +21,9 @@ class _CertificatePageState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.black,
-      appBar: AppBar(
-        backgroundColor: AppColors.grey3,
-        elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.accent,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                'C',
-                style: GoogleFonts.montserrat(
-                  color: AppColors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'CONVENA',
-              style: GoogleFonts.montserrat(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
+      appBar: ConvenaTopBar.withBack(
+        label: 'Verifikasi Sertifikat',
+        onBackPressed: () => Navigator.maybePop(context),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

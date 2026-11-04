@@ -124,4 +124,3 @@ class EventService extends ChangeNotifier {
     }
   }
 }
-
