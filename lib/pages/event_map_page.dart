@@ -1,3 +1,4 @@
+import 'package:convena/components/bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
@@ -7,8 +8,14 @@ import '../models/event_location.dart';
 class EventMapPage extends StatefulWidget {
   final EventLocation? eventLocation;
   final List<EventLocation>? events;
+  final bool showBottomNavBar;
 
-  const EventMapPage({super.key, this.eventLocation, this.events});
+  const EventMapPage({
+    super.key,
+    this.eventLocation,
+    this.events,
+    this.showBottomNavBar = true,
+  });
 
   @override
   State<EventMapPage> createState() => _EventMapPageState();
@@ -83,11 +90,19 @@ class _EventMapPageState extends State<EventMapPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.showBottomNavBar) {
+      return _buildMapContent();
+    }
     return Scaffold(
       backgroundColor: _bgDark,
       resizeToAvoidBottomInset: false,
       body: _buildMapContent(),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: ConvenaBottomNavBar(
+        currentIndex: _currentNavIndex,
+        onTap: (index) {
+          setState(() => _currentNavIndex = index);
+        },
+      ),
     );
   }
 

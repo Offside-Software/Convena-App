@@ -1,6 +1,7 @@
 import 'package:convena/components/components.dart';
 import 'package:convena/models/user.dart';
 import 'package:convena/pages/event_detail_page.dart';
+import 'package:convena/pages/event_map_page.dart';
 import 'package:convena/services/auth_service.dart';
 import 'package:convena/services/event_service.dart';
 import 'package:convena/services/theme_services.dart';
@@ -85,7 +86,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           _buildHomeTab(displayName, currentUser, authService),
           _buildQRScanTab(),
-          _buildEventSearchTab(),
+          const EventMapPage(showBottomNavBar: false),
           _buildProfileTab(currentUser, authService),
         ],
       ),
@@ -96,7 +97,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  PreferredSizeWidget _buildTopBarForCurrentTab() {
+  PreferredSizeWidget? _buildTopBarForCurrentTab() {
     switch (_currentIndex) {
       case 0:
         return ConvenaTopBar(
@@ -119,10 +120,7 @@ class _HomePageState extends State<HomePage> {
           onBackPressed: () => _onTabSelected(0),
         );
       case 2:
-        return ConvenaTopBar.withBack(
-          label: 'Cari Event',
-          onBackPressed: () => _onTabSelected(0),
-        );
+        return null;
       case 3:
         return ConvenaTopBar.withBack(
           label: 'Profil Pengguna',
