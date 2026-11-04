@@ -1,7 +1,10 @@
 import 'package:convena/components/components.dart';
+import 'package:convena/models/event.dart';
 import 'package:convena/models/user.dart';
 import 'package:convena/pages/home_page.dart';
+import 'package:convena/pages/payment_page.dart';
 import 'package:convena/services/auth_service.dart';
+import 'package:convena/services/event_service.dart';
 import 'package:convena/services/theme_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -82,13 +85,11 @@ void main() {
       ),
     );
 
-    // Verify all 4 default navigation icons exist
     expect(find.byIcon(Icons.home_rounded), findsOneWidget);
     expect(find.byIcon(Icons.qr_code_scanner_rounded), findsOneWidget);
     expect(find.byIcon(Icons.search_rounded), findsOneWidget);
     expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);
 
-    // Tap on Search tab (index 2)
     await tester.tap(find.byIcon(Icons.search_rounded));
     await tester.pump();
 
@@ -116,6 +117,7 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeService(prefs)),
           ChangeNotifierProvider(create: (_) => AuthService(prefs)),
+          ChangeNotifierProvider(create: (_) => EventService()),
         ],
         child: const MaterialApp(
           home: HomePage(user: testUser),
@@ -123,12 +125,145 @@ void main() {
       ),
     );
 
-    // Switch to profile tab (index 3)
     await tester.tap(find.byIcon(Icons.person_outline_rounded));
     await tester.pumpAndSettle();
 
-    // Verify no RenderFlex exception occurred and the email text is found
     expect(tester.takeException(), isNull);
     expect(find.text(testUser.email), findsOneWidget);
+  });
+
+  testWidgets('Event and TicketTier model calculations work accurately', (
+    WidgetTester tester,
+  ) async {
+    final event = Event(
+      id: 'evt-test-1',
+      createdBy: 'usr-1',
+      title: 'Global Tech Innovators Summit 2026',
+      slug: 'global-tech-summit-2026',
+      category: 'conference',
+      startDate: DateTime(2026, 11, 20, 9, 0),
+      endDate: DateTime(2026, 11, 20, 17, 0),
+      venueName: 'Telkom University Convention Hall',
+      city: 'Bandung',
+      company: 'Telkom University',
+      createdAt: DateTime.now(),
+      ticketTiers: const [
+        TicketTier(
+          id: 'tier-standard',
+          name: 'Standard',
+          price: 0.0,
+          quota: 250,
+          sold: 10,
+        ),
+        TicketTier(
+          id: 'tier-vip',
+          name: 'VIP All-Access + Workshop',
+          price: 350000.0,
+          quota: 50,
+          sold: 5,
+        ),
+      ],
+    );
+
+    expect(event.isFree, isTrue);
+    expect(event.formattedLowestPrice, 'GRATIS');
+    expect(event.totalCapacity, 300);
+    expect(event.attendeeCount, 15);
+    expect(event.displayLocation, 'Telkom University Convention Hall, Bandung');
+  });
+
+  testWidgets('EventCard displays title, category tag, and lowest price', (
+    WidgetTester tester,
+  ) async {
+    final event = Event(
+      id: 'evt-gemastik',
+      createdBy: 'usr-1',
+      title: 'Gemastik 2.0',
+      slug: 'gemastik-2-0',
+      shortDescription: 'Hackathon Mahasiswa se-Indonesia',
+      category: 'competition',
+      startDate: DateTime(2026, 11, 20),
+      endDate: DateTime(2026, 11, 23),
+      venueName: 'Telkom University Convention Hall',
+      city: 'Bandung',
+      company: 'Telkom University',
+      organizationName: 'HMRPL',
+      createdAt: DateTime.now(),
+      ticketTiers: const [
+        TicketTier(id: 't1', name: 'Standard', price: 0.0, quota: 250),
+        TicketTier(id: 't2', name: 'Gold', price: 50000.0, quota: 100),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: EventCard(event: event),
+        ),
+      ),
+    );
+
+    expect(find.text('Gemastik 2.0'), findsOneWidget);
+    expect(find.text('COMPETITION'), findsOneWidget);
+    expect(find.text('GRATIS'), findsOneWidget);
+    expect(find.text('Detail Tiket'), findsOneWidget);
+  });
+
+  testWidgets('PaymentPage matches payment design with stepper, summary and QRIS', (
+    WidgetTester tester,
+  ) async {
+    final event = Event(
+      id: 'evt-test-payment',
+      createdBy: 'usr-1',
+      title: 'Global Tech Innovators Summit 2026 Tel-U',
+      slug: 'global-tech-summit-tel-u',
+      category: 'conference',
+      startDate: DateTime(2026, 11, 20),
+      endDate: DateTime(2026, 11, 20),
+      venueName: 'Telkom University Convention Hall',
+      createdAt: DateTime.now(),
+    );
+
+    const selectedTier = TicketTier(
+      id: 'tier-vip',
+      name: 'VIP All-Access + Workshop',
+      price: 350000.0,
+      quota: 50,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaymentPage(
+          event: event,
+          selectedTier: selectedTier,
+        ),
+      ),
+    );
+
+    // Verify Card 1 elements
+    expect(find.text('Verified Ticket'), findsOneWidget);
+    expect(find.text('VIP All-Access + Workshop'), findsOneWidget);
+
+    // Verify Card 2 stepper
+    expect(find.text('Ticket Quantity'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+
+    // Tap + to increment quantity to 2
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
+    expect(find.text('2'), findsOneWidget);
+
+    // Verify Payment methods exist
+    expect(find.text('QRIS'), findsOneWidget);
+    expect(find.text('Bank'), findsOneWidget);
+    expect(find.text('E-Wallet'), findsOneWidget);
+
+    // Verify Card 3 summary
+    expect(find.text('ORDER PRICE SUMMARY'), findsOneWidget);
+    expect(find.text('Gateway Fee & Service'), findsOneWidget);
+
+    // Verify Card 4 QRIS scanner
+    expect(find.text('Scan via GoPay, OVO, BCA, QRIS'), findsOneWidget);
+    expect(find.text('Unduh'), findsOneWidget);
   });
 }

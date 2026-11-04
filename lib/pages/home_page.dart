@@ -1,6 +1,8 @@
 import 'package:convena/components/components.dart';
 import 'package:convena/models/user.dart';
+import 'package:convena/pages/event_detail_page.dart';
 import 'package:convena/services/auth_service.dart';
+import 'package:convena/services/event_service.dart';
 import 'package:convena/services/theme_services.dart';
 import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +21,34 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  String _selectedCategory = 'Semua';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadEvents();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadEvents() async {
+    final eventService = context.read<EventService>();
+    try {
+      await eventService.fetchEvents(
+        category: _selectedCategory != 'Semua' ? _selectedCategory : null,
+        search: _searchController.text,
+      );
+    } catch (_) {
+      // Handled via eventService.errorMessage in UI
+    }
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -66,9 +96,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  /// Selects the appropriate modular top bar for each tab.
-  /// Shows the standard "Convena" variant on Home, and provides
-  /// the back button variant on sub-tabs for seamless backward navigation.
   PreferredSizeWidget _buildTopBarForCurrentTab() {
     switch (_currentIndex) {
       case 0:
@@ -87,11 +114,20 @@ class _HomePageState extends State<HomePage> {
           },
         );
       case 1:
-        return ConvenaTopBar(title: "Scan QR", showNotification: false);
+        return ConvenaTopBar.withBack(
+          label: 'Scan QR',
+          onBackPressed: () => _onTabSelected(0),
+        );
       case 2:
-        return ConvenaTopBar(title: "Cari Event", showNotification: false);
+        return ConvenaTopBar.withBack(
+          label: 'Cari Event',
+          onBackPressed: () => _onTabSelected(0),
+        );
       case 3:
-        return ConvenaTopBar(title: "Profil Pengguna", showNotification: false);
+        return ConvenaTopBar.withBack(
+          label: 'Profil Pengguna',
+          onBackPressed: () => _onTabSelected(0),
+        );
       default:
         return const ConvenaTopBar();
     }
@@ -105,149 +141,359 @@ class _HomePageState extends State<HomePage> {
     User? currentUser,
     AuthService authService,
   ) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+    final eventService = context.watch<EventService>();
+
+    return RefreshIndicator(
+      onRefresh: _loadEvents,
+      color: AppColors.black,
+      backgroundColor: AppColors.accent,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Greeting matching Figma Design
+            Text(
+              _getGreeting(),
+              style: GoogleFonts.montserrat(
+                color: AppColors.grey,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              displayName,
+              style: GoogleFonts.montserrat(
+                color: AppColors.accent,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            // Dashboard Navigation Card
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        DashboardDetailPage(user: currentUser),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.grey3,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.grey2.withValues(alpha: 0.8),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.dashboard_customize_rounded,
+                        color: AppColors.accent,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Buka Dashboard',
+                            style: GoogleFonts.montserrat(
+                              color: AppColors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Lihat statistik dan ringkasan aktivitas',
+                            style: GoogleFonts.montserrat(
+                              color: AppColors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: AppColors.grey,
+                      size: 16,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Quick Action Cards
+            Row(
+              children: [
+                Expanded(
+                  child: _buildQuickActionCard(
+                    title: 'Scan Tiket',
+                    subtitle: 'Kamera QR',
+                    icon: Icons.qr_code_scanner_rounded,
+                    onTap: () => _onTabSelected(1),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _buildQuickActionCard(
+                    title: 'Jelajah Event',
+                    subtitle: 'Cari acara',
+                    icon: Icons.search_rounded,
+                    onTap: () => _onTabSelected(2),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // Live Featured Events Header matching Web
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'AGENDA PILIHAN',
+                          style: GoogleFonts.montserrat(
+                            color: AppColors.accent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Event Mahasiswa Terpopuler',
+                        style: GoogleFonts.montserrat(
+                          color: AppColors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!eventService.isLoading &&
+                    eventService.errorMessage == null)
+                  TextButton.icon(
+                    onPressed: () => _onTabSelected(2),
+                    iconAlignment: IconAlignment.end,
+                    icon: const Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 14,
+                      color: AppColors.accent,
+                    ),
+                    label: Text(
+                      'Semua (${eventService.events.length})',
+                      style: GoogleFonts.montserrat(
+                        color: AppColors.accent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // State Handling for Events
+            if (eventService.isLoading) ...[
+              _buildLoadingSkeleton(),
+              const SizedBox(height: 16),
+              _buildLoadingSkeleton(),
+            ] else if (eventService.errorMessage != null) ...[
+              _buildErrorView(eventService.errorMessage!),
+            ] else if (eventService.events.isEmpty) ...[
+              _buildEmptyState(),
+            ] else ...[
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: eventService.events.length,
+                separatorBuilder: (ctx, i) => const SizedBox(height: 18),
+                itemBuilder: (ctx, index) {
+                  final event = eventService.events[index];
+                  return EventCard(
+                    event: event,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EventDetailPage(event: event),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingSkeleton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.grey3,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.grey2),
+      ),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Greeting matching Figma Design
-          Text(
-            _getGreeting(),
-            style: GoogleFonts.montserrat(
-              color: AppColors.grey,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            displayName,
-            style: GoogleFonts.montserrat(
-              color: AppColors.accent,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 28),
-
-          // Dashboard Navigation Card (demonstrates Top Bar with back button variant)
-          InkWell(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => DashboardDetailPage(user: currentUser),
-                ),
-              );
-            },
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.grey3,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppColors.grey2.withValues(alpha: 0.8),
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.dashboard_customize_rounded,
-                      color: AppColors.accent,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Buka Dashboard',
-                          style: GoogleFonts.montserrat(
-                            color: AppColors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Lihat statistik dan ringkasan aktivitas',
-                          style: GoogleFonts.montserrat(
-                            color: AppColors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: AppColors.grey,
-                    size: 16,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Quick Action Cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionCard(
-                  title: 'Scan Tiket',
-                  subtitle: 'Kamera QR',
-                  icon: Icons.qr_code_scanner_rounded,
-                  onTap: () => _onTabSelected(1),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: _buildQuickActionCard(
-                  title: 'Jelajah Event',
-                  subtitle: 'Cari acara',
-                  icon: Icons.search_rounded,
-                  onTap: () => _onTabSelected(2),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 28),
-
-          // Featured Upcoming Events section
-          Text(
-            'Event Mendatang',
-            style: GoogleFonts.montserrat(
-              color: AppColors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          Container(
+            height: 140,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFF262626),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           const SizedBox(height: 14),
-          _buildEventItem(
-            title: 'Convena Developer Festival 2026',
-            date: '15 Nov 2026 • 09:00 WIB',
-            location: 'Main Auditorium, Jakarta',
-            category: 'Conference',
-          ),
+          Container(height: 14, width: 120, color: const Color(0xFF262626)),
+          const SizedBox(height: 8),
+          Container(height: 18, width: 220, color: const Color(0xFF262626)),
           const SizedBox(height: 12),
-          _buildEventItem(
-            title: 'Tech Meetup & Networking Night',
-            date: '28 Nov 2026 • 18:30 WIB',
-            location: 'Community Hub, Bandung',
-            category: 'Meetup',
+          Container(
+            height: 12,
+            width: double.infinity,
+            color: const Color(0xFF262626),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorView(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.grey3,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.6)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppColors.danger.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.wifi_off_rounded,
+              color: AppColors.danger,
+              size: 26,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Koneksi API Terputus',
+            style: GoogleFonts.montserrat(
+              color: AppColors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.montserrat(
+              color: AppColors.grey,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 18),
+          ElevatedButton.icon(
+            onPressed: _loadEvents,
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.black,
+              size: 16,
+            ),
+            label: Text(
+              'Coba Lagi',
+              style: GoogleFonts.montserrat(
+                color: AppColors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              foregroundColor: AppColors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: AppColors.grey3,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.grey2),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.event_busy_rounded, color: AppColors.grey, size: 40),
+          const SizedBox(height: 12),
+          Text(
+            'Belum ada event tersedia saat ini.',
+            style: GoogleFonts.montserrat(color: AppColors.grey, fontSize: 13),
           ),
         ],
       ),
@@ -307,96 +553,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEventItem({
-    required String title,
-    required String date,
-    required String location,
-    required String category,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.grey3,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.grey2.withValues(alpha: 0.6),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  category,
-                  style: GoogleFonts.montserrat(
-                    color: AppColors.accent,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.bookmark_border_rounded,
-                color: AppColors.grey,
-                size: 18,
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: GoogleFonts.montserrat(
-              color: AppColors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              const Icon(
-                Icons.calendar_today_rounded,
-                color: AppColors.grey,
-                size: 13,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                date,
-                style: GoogleFonts.montserrat(
-                  color: AppColors.grey,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(Icons.place_outlined, color: AppColors.grey, size: 13),
-              const SizedBox(width: 6),
-              Text(
-                location,
-                style: GoogleFonts.montserrat(
-                  color: AppColors.grey,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   // ---------------------------------------------------------------------------
   // TAB 1: QR SCAN
   // ---------------------------------------------------------------------------
@@ -407,7 +563,6 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Viewfinder box
             Container(
               width: 240,
               height: 240,
@@ -419,11 +574,7 @@ class _HomePageState extends State<HomePage> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  const Icon(
-                    Icons.qr_code_scanner_rounded,
-                    color: AppColors.accent,
-                    size: 80,
-                  ),
+                  const Icon(Icons.qr_code, color: AppColors.accent, size: 80),
                   Positioned(
                     bottom: 16,
                     child: Container(
@@ -510,6 +661,17 @@ class _HomePageState extends State<HomePage> {
   // TAB 2: EVENT SEARCH
   // ---------------------------------------------------------------------------
   Widget _buildEventSearchTab() {
+    final eventService = context.watch<EventService>();
+    final categories = [
+      'Semua',
+      'competition',
+      'seminar',
+      'workshop',
+      'festival',
+      'conference',
+      'gathering',
+    ];
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
@@ -528,6 +690,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             child: TextField(
+              controller: _searchController,
+              onChanged: (_) => _loadEvents(),
               style: GoogleFonts.montserrat(
                 color: AppColors.white,
                 fontSize: 14,
@@ -535,7 +699,7 @@ class _HomePageState extends State<HomePage> {
               cursorColor: AppColors.accent,
               decoration: InputDecoration(
                 icon: const Icon(Icons.search_rounded, color: AppColors.grey),
-                hintText: 'Cari konser, seminar, festival...',
+                hintText: 'Cari event, lomba, seminar...',
                 hintStyle: GoogleFonts.montserrat(
                   color: AppColors.grey,
                   fontSize: 14,
@@ -543,71 +707,123 @@ class _HomePageState extends State<HomePage> {
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.clear,
+                          color: AppColors.grey,
+                          size: 18,
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          _loadEvents();
+                        },
+                      )
+                    : null,
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
-          // Categories
+          // Categories horizontal scroll
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: [
-                _buildCategoryChip('Semua', isSelected: true),
-                _buildCategoryChip('Musik'),
-                _buildCategoryChip('Teknologi'),
-                _buildCategoryChip('Seminar'),
-                _buildCategoryChip('Workshop'),
-              ],
+              children: categories.map((cat) {
+                final isSelected =
+                    _selectedCategory.toLowerCase() == cat.toLowerCase();
+                return _buildCategoryChip(
+                  cat,
+                  isSelected: isSelected,
+                  onTap: () {
+                    setState(() => _selectedCategory = cat);
+                    _loadEvents();
+                  },
+                );
+              }).toList(),
             ),
           ),
           const SizedBox(height: 24),
 
           Text(
-            'Hasil Pencarian',
+            'Hasil Event (${eventService.events.length})',
             style: GoogleFonts.montserrat(
               color: AppColors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 12),
-          _buildEventItem(
-            title: 'UI/UX Design Masterclass 2026',
-            date: '5 Des 2026 • 13:00 WIB',
-            location: 'Online via Zoom',
-            category: 'Workshop',
-          ),
-          const SizedBox(height: 12),
-          _buildEventItem(
-            title: 'Indie Sound Showcase #4',
-            date: '12 Des 2026 • 19:00 WIB',
-            location: 'Hall A, Senayan',
-            category: 'Musik',
-          ),
+          const SizedBox(height: 14),
+
+          if (eventService.isLoading) ...[
+            _buildLoadingSkeleton(),
+          ] else if (eventService.errorMessage != null) ...[
+            _buildErrorView(eventService.errorMessage!),
+          ] else if (eventService.events.isEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(32),
+              alignment: Alignment.center,
+              child: Text(
+                'Tidak ada event yang sesuai dengan pencarian.',
+                style: GoogleFonts.montserrat(
+                  color: AppColors.grey,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ] else ...[
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: eventService.events.length,
+              separatorBuilder: (ctx, i) => const SizedBox(height: 16),
+              itemBuilder: (ctx, index) {
+                final event = eventService.events[index];
+                return EventCard(
+                  event: event,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EventDetailPage(event: event),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildCategoryChip(String title, {bool isSelected = false}) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? AppColors.accent : AppColors.grey3,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSelected ? AppColors.accent : AppColors.grey2,
-          width: 1,
+  Widget _buildCategoryChip(
+    String title, {
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accent : AppColors.grey3,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.accent : AppColors.grey2,
+            width: 1,
+          ),
         ),
-      ),
-      child: Text(
-        title,
-        style: GoogleFonts.montserrat(
-          color: isSelected ? AppColors.black : AppColors.white,
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+        child: Text(
+          title.toUpperCase(),
+          style: GoogleFonts.montserrat(
+            color: isSelected ? AppColors.black : AppColors.white,
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          ),
         ),
       ),
     );
@@ -624,7 +840,6 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
       child: Column(
         children: [
-          // User Avatar & Name Card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -691,7 +906,6 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 16),
 
-          // Details List
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -723,7 +937,6 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 24),
 
-          // Logout Button
           SizedBox(
             width: double.infinity,
             height: 50,
