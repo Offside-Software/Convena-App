@@ -206,7 +206,7 @@ void main() {
     expect(find.text('Gemastik 2.0'), findsOneWidget);
     expect(find.text('COMPETITION'), findsOneWidget);
     expect(find.text('GRATIS'), findsOneWidget);
-    expect(find.text('Detail Tiket'), findsOneWidget);
+    expect(find.text('Detail Event'), findsOneWidget);
   });
 
   testWidgets('PaymentPage matches payment design with stepper, summary and QRIS', (
