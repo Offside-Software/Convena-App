@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:convena/models/user.dart';
+import 'package:convena/pages/home_page.dart';
 import 'package:convena/services/auth_service.dart';
 import 'package:convena/services/theme_services.dart';
 import 'package:convena/theme.dart';
@@ -77,7 +77,8 @@ class _AuthPageState extends State<AuthPage> {
     try {
       await auth.login(identifier, password);
       if (mounted) {
-        final name = auth.currentUser?.displayName ?? auth.currentUser?.username ?? '';
+        final name =
+            auth.currentUser?.displayName ?? auth.currentUser?.username ?? '';
         _showSnackbar("Login berhasil! Selamat datang $name", isSuccess: true);
       }
     } catch (e) {
@@ -111,8 +112,12 @@ class _AuthPageState extends State<AuthPage> {
     try {
       await auth.register(username, email, password);
       if (mounted) {
-        final name = auth.currentUser?.displayName ?? auth.currentUser?.username ?? '';
-        _showSnackbar("Pendaftaran berhasil! Selamat datang, $name", isSuccess: true);
+        final name =
+            auth.currentUser?.displayName ?? auth.currentUser?.username ?? '';
+        _showSnackbar(
+          "Pendaftaran berhasil! Selamat datang, $name",
+          isSuccess: true,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -126,11 +131,16 @@ class _AuthPageState extends State<AuthPage> {
     final theme = context.watch<ThemeService>();
     final auth = context.watch<AuthService>();
 
+    // If authenticated, show HomePage directly without login glow background
+    if (auth.isAuthenticated && auth.currentUser != null) {
+      return HomePage(user: auth.currentUser!, auth: auth);
+    }
+
     return Scaffold(
       backgroundColor: theme.colors.bg,
       body: Stack(
         children: [
-          // Ambient bottom glow effect matching design
+          // Ambient bottom glow effect matching design - only shown for login/register
           const _BottomGlowBackground(),
 
           // Main form content
@@ -155,17 +165,15 @@ class _AuthPageState extends State<AuthPage> {
                       ),
                     );
                   },
-                  child: auth.isAuthenticated
-                      ? _buildLoggedInView(auth.currentUser!, auth)
-                      : (_isLogin
-                          ? _buildLoginView(
-                              key: const ValueKey('login_view'),
-                              auth: auth,
-                            )
-                          : _buildRegisterView(
-                              key: const ValueKey('register_view'),
-                              auth: auth,
-                            )),
+                  child: _isLogin
+                      ? _buildLoginView(
+                          key: const ValueKey('login_view'),
+                          auth: auth,
+                        )
+                      : _buildRegisterView(
+                          key: const ValueKey('register_view'),
+                          auth: auth,
+                        ),
                 ),
               ),
             ),
@@ -458,118 +466,6 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 
-  /// Logged In State View
-  Widget _buildLoggedInView(User user, AuthService auth) {
-    return Column(
-      key: const ValueKey('logged_in_view'),
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildHeader(),
-        const SizedBox(height: 36),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.grey3,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.grey2, width: 1.2),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.accent,
-                    child: Text(
-                      user.username.isNotEmpty
-                          ? user.username[0].toUpperCase()
-                          : 'U',
-                      style: GoogleFonts.montserrat(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user.displayName,
-                          style: GoogleFonts.montserrat(
-                            color: AppColors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          "@${user.username}",
-                          style: GoogleFonts.montserrat(
-                            color: AppColors.grey,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.accent, width: 1),
-                    ),
-                    child: Text(
-                      user.role.toUpperCase(),
-                      style: GoogleFonts.montserrat(
-                        color: AppColors.accent,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Divider(color: AppColors.grey2, height: 1),
-              const SizedBox(height: 16),
-              Text(
-                "Email",
-                style: GoogleFonts.montserrat(
-                  color: AppColors.grey,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                user.email,
-                style: GoogleFonts.montserrat(
-                  color: AppColors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 28),
-        _buildActionButton(
-          label: "Logout",
-          onPressed: () async {
-            await auth.logout();
-            if (mounted) {
-              _showSnackbar("Berhasil logout", isSuccess: true);
-            }
-          },
-        ),
-      ],
-    );
-  }
 }
 
 /// Ambient glow background at the bottom of the auth screen
