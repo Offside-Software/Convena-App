@@ -323,7 +323,7 @@ class EventCard extends StatelessWidget {
                           iconAlignment: IconAlignment.end,
                           icon: const Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.black),
                           label: Text(
-                            'Detail Tiket',
+                            'Detail Event',
                             style: GoogleFonts.montserrat(
                               color: AppColors.black,
                               fontSize: 12,
