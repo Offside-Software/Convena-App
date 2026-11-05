@@ -24,6 +24,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Kamera digunakan untuk memindai QR tiket acara.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<!-- Scheme untuk url_launcher agar dapat meluncurkan Google Maps, Apple Maps, dan HTTPS URL -->
