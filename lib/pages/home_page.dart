@@ -1,5 +1,6 @@
 import 'package:convena/components/components.dart';
 import 'package:convena/models/user.dart';
+import 'package:convena/pages/auth_page.dart';
 import 'package:convena/pages/event_detail_page.dart';
 import 'package:convena/pages/scan_qr_page.dart';
 import 'package:convena/services/auth_service.dart';
@@ -882,6 +883,11 @@ class _HomePageState extends State<HomePage> {
 
                 if (confirm == true) {
                   await authService.logout();
+                  if (!mounted) return;
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const AuthPage()),
+                    (route) => false,
+                  );
                 }
               },
               icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
