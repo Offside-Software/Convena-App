@@ -8,6 +8,7 @@ import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:convena/pages/verificate_certification_page.dart';
 
 class HomePage extends StatefulWidget {
   final User? user;
@@ -247,28 +248,48 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 20),
 
-            // Quick Action Cards
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuickActionCard(
-                    title: 'Scan Tiket',
-                    subtitle: 'Kamera QR',
-                    icon: Icons.qr_code_scanner_rounded,
-                    onTap: () => _onTabSelected(1),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: _buildQuickActionCard(
-                    title: 'Jelajah Event',
-                    subtitle: 'Cari acara',
-                    icon: Icons.search_rounded,
-                    onTap: () => _onTabSelected(2),
-                  ),
-                ),
-              ],
-            ),
+
+// Quick Action Cards
+Row(
+  children: [
+    Expanded(
+      child: _buildQuickActionCard(
+        title: 'Scan Tiket',
+        subtitle: 'Kamera QR',
+        icon: Icons.qr_code_scanner_rounded,
+        onTap: () => _onTabSelected(1),
+      ),
+    ),
+    const SizedBox(width: 14),
+    Expanded(
+      child: _buildQuickActionCard(
+        title: 'Jelajah Event',
+        subtitle: 'Cari acara',
+        icon: Icons.search_rounded,
+        onTap: () => _onTabSelected(2),
+      ),
+    ),
+  ],
+),
+
+const SizedBox(height: 14),
+
+// Verifikasi Sertifikat
+_buildQuickActionCard(
+  title: 'Verifikasi Sertifikat',
+  subtitle: 'Cek keaslian e-sertifikat',
+  icon: Icons.verified_rounded,
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            const VerificateCertificationPage(),
+      ),
+    );
+  },
+),
+
             const SizedBox(height: 32),
 
             // Live Featured Events Header matching Web
