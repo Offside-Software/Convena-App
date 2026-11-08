@@ -41,13 +41,6 @@ class _EventMapPageState extends State<EventMapPage> {
   static const LatLng _bandungCenter = LatLng(-6.8915, 107.6107);
   static const double _defaultZoom = 16.0;
 
-  static const Color _bgDark = AppColors.black;
-  static const Color _surfaceDark = AppColors.grey3;
-  static const Color _cardBorderDark = AppColors.grey2;
-  static const Color _inputDark = AppColors.grey3;
-  static const Color _neonLime = AppColors.accent;
-  static const Color _textMuted = AppColors.grey;
-
   static const String _osmOfficialUrl =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
@@ -138,7 +131,7 @@ class _EventMapPageState extends State<EventMapPage> {
       return _buildMapContent();
     }
     return Scaffold(
-      backgroundColor: _bgDark,
+      backgroundColor: AppColors.black,
       resizeToAvoidBottomInset: false,
       body: _buildMapContent(),
       bottomNavigationBar: ConvenaBottomNavBar(
@@ -157,7 +150,7 @@ class _EventMapPageState extends State<EventMapPage> {
   /// Tampilan Konten Peta & Informasi Event
   Widget _buildMapContent() {
     return Container(
-      color: _bgDark,
+      color: AppColors.black,
       child: Stack(
         children: [
           //leaflet
@@ -242,8 +235,8 @@ class _EventMapPageState extends State<EventMapPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    _bgDark.withOpacity(0.96),
-                    _bgDark.withOpacity(0.85),
+                    AppColors.black.withValues(alpha: 0.96),
+                    AppColors.black.withValues(alpha: 0.85),
                     AppColors.transparent,
                   ],
                   begin: Alignment.topCenter,
@@ -270,7 +263,7 @@ class _EventMapPageState extends State<EventMapPage> {
                         TextSpan(
                           text: 'Events',
                           style: TextStyle(
-                            color: _neonLime,
+                            color: AppColors.accent,
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,
@@ -284,12 +277,12 @@ class _EventMapPageState extends State<EventMapPage> {
                   //location header
                   const Row(
                     children: [
-                      Icon(Icons.location_on, color: _neonLime, size: 15),
+                      Icon(Icons.location_on, color: AppColors.accent, size: 15),
                       SizedBox(width: 4),
                       Text(
                         'ITB Ganesha, Bandung',
                         style: TextStyle(
-                          color: _textMuted,
+                          color: AppColors.grey,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -302,9 +295,9 @@ class _EventMapPageState extends State<EventMapPage> {
                   Container(
                     height: 46,
                     decoration: BoxDecoration(
-                      color: _inputDark,
+                      color: AppColors.grey3,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: _cardBorderDark, width: 1),
+                      border: Border.all(color: AppColors.grey2, width: 1),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: Row(
@@ -323,7 +316,7 @@ class _EventMapPageState extends State<EventMapPage> {
                               color: AppColors.white,
                               fontSize: 14,
                             ),
-                            cursorColor: _neonLime,
+                            cursorColor: AppColors.accent,
                             decoration: const InputDecoration(
                               hintText: 'Cari event atau lokasi',
                               hintStyle: TextStyle(
@@ -357,12 +350,12 @@ class _EventMapPageState extends State<EventMapPage> {
                   vertical: 9,
                 ),
                 decoration: BoxDecoration(
-                  color: _inputDark,
+                  color: AppColors.grey3,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _cardBorderDark, width: 1.2),
+                  border: Border.all(color: AppColors.grey2, width: 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.black.withOpacity(0.4),
+                      color: AppColors.black.withValues(alpha: 0.4),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -430,12 +423,12 @@ class _EventMapPageState extends State<EventMapPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _surfaceDark,
+        color: AppColors.grey3,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _cardBorderDark, width: 1.2),
+        border: Border.all(color: AppColors.grey2, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.6),
+            color: AppColors.black.withValues(alpha: 0.6),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -463,7 +456,7 @@ class _EventMapPageState extends State<EventMapPage> {
                     ),
                     child: const Icon(
                       Icons.festival_rounded,
-                      color: _neonLime,
+                      color: AppColors.accent,
                       size: 28,
                     ),
                   );
@@ -491,12 +484,12 @@ class _EventMapPageState extends State<EventMapPage> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, color: _neonLime, size: 13),
+                    const Icon(Icons.location_on, color: AppColors.accent, size: 13),
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
                         event.venueName,
-                        style: const TextStyle(color: _textMuted, fontSize: 12),
+                        style: const TextStyle(color: AppColors.grey, fontSize: 12),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -508,13 +501,13 @@ class _EventMapPageState extends State<EventMapPage> {
                   children: [
                     const Icon(
                       Icons.near_me_rounded,
-                      color: _textMuted,
+                      color: AppColors.grey,
                       size: 12,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       event.distance,
-                      style: const TextStyle(color: _textMuted, fontSize: 12),
+                      style: const TextStyle(color: AppColors.grey, fontSize: 12),
                     ),
                   ],
                 ),
@@ -584,11 +577,11 @@ class _EventMapPageState extends State<EventMapPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: _neonLime,
+                color: AppColors.accent,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: _neonLime.withOpacity(0.3),
+                    color: AppColors.accent.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -703,7 +696,7 @@ class _EventMapPageState extends State<EventMapPage> {
     required VoidCallback onTap,
   }) {
     final isActive = _currentNavIndex == index;
-    final iconColor = isActive ? _neonLime : AppColors.grey;
+    final iconColor = isActive ? AppColors.accent : AppColors.grey;
 
     return GestureDetector(
       onTap: onTap,
@@ -713,7 +706,7 @@ class _EventMapPageState extends State<EventMapPage> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.accent.withOpacity(0.2) : AppColors.transparent,
+          color: isActive ? AppColors.accent.withValues(alpha: 0.2) : AppColors.transparent,
           borderRadius: BorderRadius.circular(18),
         ),
         child: customIcon(iconColor),
@@ -777,9 +770,9 @@ class _PinPainter extends CustomPainter {
       ..close();
 
     if (hasGlow) {
-      canvas.drawShadow(path, pinColor.withOpacity(0.85), 10.0, true);
+      canvas.drawShadow(path, pinColor.withValues(alpha: 0.85), 10.0, true);
     } else {
-      canvas.drawShadow(path, AppColors.black.withOpacity(0.4), 4.0, true);
+      canvas.drawShadow(path, AppColors.black.withValues(alpha: 0.4), 4.0, true);
     }
 
     final pinPaint = Paint()
