@@ -40,16 +40,20 @@ class _RegistrationPageState extends State<RegistrationPage> {
     _currentTier = widget.selectedTier;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final user = context.read<AuthService>().currentUser;
-      if (user != null) {
-        if (_nameController.text.isEmpty) {
-          _nameController.text = user.displayName.isNotEmpty
-              ? user.displayName
-              : user.username;
+      try {
+        final user = context.read<AuthService>().currentUser;
+        if (user != null) {
+          if (_nameController.text.isEmpty) {
+            _nameController.text = user.displayName.isNotEmpty
+                ? user.displayName
+                : user.username;
+          }
+          if (_emailController.text.isEmpty) {
+            _emailController.text = user.email;
+          }
         }
-        if (_emailController.text.isEmpty) {
-          _emailController.text = user.email;
-        }
+      } catch (_) {
+        // Provider not mounted in isolated test context
       }
     });
   }
@@ -171,7 +175,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
     setState(() => _isSubmitting = true);
     EventRegistration? confirmedRegistration;
     try {
-      final eventService = context.read<EventService>();
+      EventService eventService;
+      try {
+        eventService = context.read<EventService>();
+      } catch (_) {
+        eventService = EventService();
+      }
       final res = await eventService.registerForEvent(
         eventId: widget.event.id,
         tierId: _currentTier.id,

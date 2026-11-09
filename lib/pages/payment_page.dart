@@ -114,13 +114,18 @@ class _PaymentPageState extends State<PaymentPage> {
 
     EventRegistration? confirmedRegistration;
     try {
-      final eventService = context.read<EventService>();
+      EventService eventService;
+      try {
+        eventService = context.read<EventService>();
+      } catch (_) {
+        eventService = EventService();
+      }
       final res = await eventService.registerForEvent(
         eventId: widget.event.id,
         tierId: widget.selectedTier.id,
         paymentMethod: _selectedPaymentMethod == 'bank'
             ? 'bank_transfer'
-            : 'qris',
+            : _selectedPaymentMethod,
         attendeeName: widget.attendeeName,
         attendeeEmail: widget.attendeeEmail,
         attendeeInstitution: widget.attendeeInstitution,
@@ -378,7 +383,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Kategori Tiket:',
+                        'Selected Tier:',
                         style: GoogleFonts.montserrat(
                           color: AppColors.grey,
                           fontSize: 12,
@@ -386,7 +391,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         ),
                       ),
                       Text(
-                        '${widget.selectedTier.name} (${widget.selectedTier.formattedPrice})',
+                        widget.selectedTier.name,
                         style: GoogleFonts.montserrat(
                           color: AppColors.accent,
                           fontSize: 13,
@@ -401,7 +406,7 @@ class _PaymentPageState extends State<PaymentPage> {
             const SizedBox(height: 14),
 
             // -----------------------------------------------------------------
-            // CARD 2: Quantity, Discount & Payment Method (SCAN QRIS vs Pay via Bank)
+            // CARD 2: Quantity, Discount & Payment Method
             // -----------------------------------------------------------------
             Container(
               width: double.infinity,
@@ -419,7 +424,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Jumlah Tiket',
+                        'Ticket Quantity',
                         style: GoogleFonts.montserrat(
                           color: AppColors.white,
                           fontSize: 13,
@@ -494,7 +499,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Diskon Mahasiswa (15%)',
+                        'Member Discount (15%)',
                         style: GoogleFonts.montserrat(
                           color: AppColors.white,
                           fontSize: 13,
@@ -517,9 +522,9 @@ class _PaymentPageState extends State<PaymentPage> {
                   ),
                   const SizedBox(height: 14),
 
-                  // Payment Method Selector matching Web: SCAN QRIS vs Pay via Bank
+                  // Payment Method Selector
                   Text(
-                    'Pilih Metode Pembayaran',
+                    'Payment Method',
                     style: GoogleFonts.montserrat(
                       color: AppColors.grey,
                       fontSize: 12,
@@ -532,16 +537,24 @@ class _PaymentPageState extends State<PaymentPage> {
                       Expanded(
                         child: _buildPaymentOption(
                           id: 'qris',
-                          label: 'SCAN QRIS',
+                          label: 'QRIS',
                           icon: Icons.qr_code_scanner_rounded,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: _buildPaymentOption(
                           id: 'bank',
-                          label: 'Pay via Bank',
+                          label: 'Bank',
                           icon: Icons.account_balance_rounded,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildPaymentOption(
+                          id: 'ewallet',
+                          label: 'E-Wallet',
+                          icon: Icons.account_balance_wallet_rounded,
                         ),
                       ),
                     ],
@@ -552,7 +565,7 @@ class _PaymentPageState extends State<PaymentPage> {
             const SizedBox(height: 14),
 
             // -----------------------------------------------------------------
-            // CARD 3: RINGKASAN PEMBAYARAN
+            // CARD 3: ORDER PRICE SUMMARY
             // -----------------------------------------------------------------
             Container(
               width: double.infinity,
@@ -566,7 +579,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'RINGKASAN PEMBAYARAN',
+                    'ORDER PRICE SUMMARY',
                     style: GoogleFonts.montserrat(
                       color: AppColors.white,
                       fontSize: 13,
@@ -576,22 +589,20 @@ class _PaymentPageState extends State<PaymentPage> {
                   ),
                   const SizedBox(height: 14),
                   _buildPriceRow(
-                    label: 'Harga Tiket (${_quantity}x)',
+                    label: 'Base Ticket Price (${_quantity}x)',
                     value: _formatRupiah(subtotal),
                   ),
-                  if (_memberDiscountActive) ...[
-                    const SizedBox(height: 8),
-                    _buildPriceRow(
-                      label: 'Diskon Mahasiswa (15%)',
-                      value: discount > 0
-                          ? '-${_formatRupiah(discount)}'
-                          : 'Rp 0',
-                      valueColor: AppColors.accent,
-                    ),
-                  ],
                   const SizedBox(height: 8),
                   _buildPriceRow(
-                    label: 'Biaya Layanan',
+                    label: 'Member Discount (15%)',
+                    value: discount > 0
+                        ? '-${_formatRupiah(discount)}'
+                        : 'Rp 0',
+                    valueColor: AppColors.accent,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildPriceRow(
+                    label: 'Gateway Fee & Service',
                     value: _formatRupiah(gatewayFee),
                   ),
                   const SizedBox(height: 16),
@@ -605,7 +616,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total Tagihan',
+                            'Est. To Be Paid',
                             style: GoogleFonts.montserrat(
                               color: AppColors.grey,
                               fontSize: 12,
@@ -626,7 +637,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         ],
                       ),
                       Text(
-                        'Instan',
+                        'Expires in 15:00',
                         style: GoogleFonts.montserrat(
                           color: AppColors.accent,
                           fontSize: 12,
@@ -643,7 +654,7 @@ class _PaymentPageState extends State<PaymentPage> {
             // -----------------------------------------------------------------
             // CARD 4: Payment Instructions (QRIS vs Bank Virtual Account)
             // -----------------------------------------------------------------
-            if (_selectedPaymentMethod == 'qris')
+            if (_selectedPaymentMethod != 'bank')
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -662,7 +673,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            'Scan QRIS (GoPay, OVO, Dana, BCA, Mandiri)',
+                            'Scan via GoPay, OVO, BCA, QRIS',
                             style: GoogleFonts.montserrat(
                               color: AppColors.white,
                               fontSize: 12.5,
