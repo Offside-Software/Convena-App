@@ -7,12 +7,10 @@ class CertificatePage extends StatefulWidget {
   const CertificatePage({super.key});
 
   @override
-  State<CertificatePage> createState() =>
-      _CertificatePageState();
+  State<CertificatePage> createState() => _CertificatePageState();
 }
 
-class _CertificatePageState
-    extends State<CertificatePage> {
+class _CertificatePageState extends State<CertificatePage> {
   final TextEditingController _certController = TextEditingController(
     text: 'CNV-2026-ITB-8821',
   );
@@ -32,17 +30,25 @@ class _CertificatePageState
           children: [
             Center(
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.15),
+                  color: AppColors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+                  border: Border.all(
+                    color: AppColors.accent.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.verified_user, size: 14, color: AppColors.accent),
+                    Icon(
+                      Icons.verified_user,
+                      size: 14,
+                      color: AppColors.accent,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'PORTAL OTENTIKASI RESMI',
@@ -73,7 +79,10 @@ class _CertificatePageState
               'Validasi keabsahan dokumen penghargaan, kepanitiaan, atau kehadiran peserta acara mahasiswa melalui basis data Convena.',
               textAlign: TextAlign.center,
               style: GoogleFonts.montserrat(
-                  fontSize: 12, color: AppColors.grey, height: 1.4),
+                fontSize: 12,
+                color: AppColors.grey,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 24),
             Container(
@@ -92,8 +101,11 @@ class _CertificatePageState
                     decoration: InputDecoration(
                       hintText: 'Masukkan ID Sertifikat',
                       hintStyle: GoogleFonts.montserrat(color: AppColors.grey),
-                      prefixIcon:
-                          Icon(Icons.search, color: AppColors.accent, size: 20),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: AppColors.accent,
+                        size: 20,
+                      ),
                       filled: true,
                       fillColor: Colors.black,
                       contentPadding: const EdgeInsets.all(12),
