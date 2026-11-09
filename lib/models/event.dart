@@ -66,6 +66,7 @@ class TicketTier {
 class Event {
   final String id;
   final String createdBy;
+  final String? organizationId;
   final String title;
   final String slug;
   final String? description;
@@ -81,6 +82,9 @@ class Event {
   final String? address;
   final String? city;
   final String? onlineUrl;
+  final double? latitude;
+  final double? longitude;
+  final String? attendanceQrToken;
   final String? organizationName;
   final String? company;
   final List<TicketTier> ticketTiers;
@@ -90,6 +94,7 @@ class Event {
   const Event({
     required this.id,
     required this.createdBy,
+    this.organizationId,
     required this.title,
     required this.slug,
     this.description,
@@ -105,6 +110,9 @@ class Event {
     this.address,
     this.city,
     this.onlineUrl,
+    this.latitude,
+    this.longitude,
+    this.attendanceQrToken,
     this.organizationName,
     this.company,
     this.ticketTiers = const [],
@@ -183,6 +191,7 @@ class Event {
     return Event(
       id: json['id']?.toString() ?? '',
       createdBy: json['createdBy']?.toString() ?? '',
+      organizationId: json['organizationId']?.toString(),
       title: json['title'] as String? ?? 'Untitled Event',
       slug: json['slug'] as String? ?? '',
       description: json['description'] as String?,
@@ -203,6 +212,9 @@ class Event {
       address: json['address'] as String?,
       city: json['city'] as String?,
       onlineUrl: json['onlineUrl'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      attendanceQrToken: json['attendanceQrToken'] as String?,
       organizationName: json['organizationName'] as String? ?? 'BEM & DPM Kema Tel-U',
       company: json['company'] as String? ?? 'Telkom University',
       ticketTiers: tiers,
@@ -218,6 +230,7 @@ class Event {
     return {
       'id': id,
       'createdBy': createdBy,
+      'organizationId': organizationId,
       'title': title,
       'slug': slug,
       'description': description,
@@ -233,6 +246,9 @@ class Event {
       'address': address,
       'city': city,
       'onlineUrl': onlineUrl,
+      'latitude': latitude,
+      'longitude': longitude,
+      'attendanceQrToken': attendanceQrToken,
       'organizationName': organizationName,
       'company': company,
       'ticketTiers': ticketTiers.map((t) => t.toJson()).toList(),

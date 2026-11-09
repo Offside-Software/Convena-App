@@ -1,25 +1,24 @@
 import 'package:convena/components/components.dart';
 import 'package:convena/models/event.dart';
 import 'package:convena/pages/home_page.dart';
+import 'package:convena/services/event_service.dart';
 import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Payment & Checkout Page matching Convena's payment design system.
-///
-/// Implements:
-/// - Event & Verified Ticket overview card
-/// - Ticket Quantity stepper, Member Discount (15%) toggle, and Payment Method selector
-/// - Order Price Summary breakdown
-/// - QRIS payment visual scanner box with instant payment instructions
 class PaymentPage extends StatefulWidget {
   final Event event;
   final TicketTier selectedTier;
+  final String? attendeeName;
+  final String? attendeeInstitution;
 
   const PaymentPage({
     super.key,
     required this.event,
     required this.selectedTier,
+    this.attendeeName,
+    this.attendeeInstitution,
   });
 
   @override
@@ -30,6 +29,7 @@ class _PaymentPageState extends State<PaymentPage> {
   int _quantity = 1;
   bool _memberDiscountActive = true;
   String _selectedPaymentMethod = 'qris'; // 'qris', 'bank', 'ewallet'
+  bool _isSubmitting = false;
 
   String _formatRupiah(num value) {
     if (value <= 0) return 'GRATIS';
@@ -530,9 +530,29 @@ class _PaymentPageState extends State<PaymentPage> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: () {
-                  _showSuccessDialog();
-                },
+                onPressed: _isSubmitting
+                    ? null
+                    : () async {
+                        setState(() => _isSubmitting = true);
+                        try {
+                          await EventService().registerForEvent(
+                            eventId: widget.event.id,
+                            tierId: widget.selectedTier.id,
+                            paymentMethod: _selectedPaymentMethod == 'bank'
+                                ? 'bank_transfer'
+                                : 'qris',
+                            attendeeName: widget.attendeeName,
+                            attendeeInstitution: widget.attendeeInstitution,
+                          );
+                        } catch (e) {
+                          debugPrint('Info pembayaran API: $e');
+                        } finally {
+                          if (mounted) setState(() => _isSubmitting = false);
+                        }
+                        if (mounted) {
+                          _showSuccessDialog();
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   foregroundColor: AppColors.black,
@@ -542,7 +562,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   ),
                 ),
                 child: Text(
-                  'Saya Sudah Bayar',
+                  _isSubmitting ? 'Memverifikasi Pembayaran...' : 'Saya Sudah Bayar',
                   style: GoogleFonts.montserrat(
                     color: AppColors.black,
                     fontSize: 15,
