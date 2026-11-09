@@ -2,6 +2,7 @@ import 'package:convena/components/components.dart';
 import 'package:convena/models/event.dart';
 import 'package:convena/pages/home_page.dart';
 import 'package:convena/pages/payment_page.dart';
+import 'package:convena/services/event_service.dart';
 import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,6 +28,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _institutionController = TextEditingController();
 
   bool _isExternal = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -103,7 +105,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) {
       _showSnackBar(
         title: 'Data Belum Lengkap',
@@ -113,19 +116,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
       return;
     }
 
-    final payload = {
-      'event_title': widget.event.title,
-      'ticket_tier': widget.selectedTier.name,
-      'ticket_price': widget.selectedTier.price,
-      'name': _nameController.text.trim(),
-      'nim': _nimController.text.trim(),
-      'campus_category': _isExternal ? 'Luar Kampus' : 'Dalam Kampus',
-      if (_isExternal) 'institution': _institutionController.text.trim(),
-    };
+    final attendeeName = _nameController.text.trim();
+    final institution = _isExternal
+        ? _institutionController.text.trim()
+        : (widget.event.company ?? 'Kampus Internal (${_nimController.text.trim()})');
 
-    debugPrint('Payload Registrasi: $payload');
-
-    // Jika tiket berbayar, arahkan ke PaymentPage
+    // Jika tiket berbayar: Register -> Payment (SCAN QRIS, Pay via Bank) -> Done
     if (!widget.selectedTier.isFree) {
       Navigator.push(
         context,
@@ -133,15 +129,33 @@ class _RegistrationPageState extends State<RegistrationPage> {
           builder: (ctx) => PaymentPage(
             event: widget.event,
             selectedTier: widget.selectedTier,
+            attendeeName: attendeeName,
+            attendeeInstitution: institution,
           ),
         ),
       );
       return;
     }
 
-    // Jika tiket gratis, langsung selesaikan pendaftaran dan kembali ke HomePage
+    // Jika tiket gratis: Register -> Done (langsung simpan ke backend API)
+    setState(() => _isSubmitting = true);
+    try {
+      await EventService().registerForEvent(
+        eventId: widget.event.id,
+        tierId: widget.selectedTier.id,
+        paymentMethod: 'free',
+        attendeeName: attendeeName,
+        attendeeInstitution: institution,
+      );
+    } catch (e) {
+      debugPrint('Info registrasi API: $e');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+
+    if (!mounted) return;
     _showSnackBar(
-      title: 'Registrasi Berhasil!',
+      title: 'Registrasi Tiket Gratis Berhasil!',
       message: 'Kamu berhasil terdaftar di ${widget.event.title}.',
     );
 

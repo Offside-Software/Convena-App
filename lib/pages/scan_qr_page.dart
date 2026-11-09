@@ -1,3 +1,4 @@
+import 'package:convena/services/event_service.dart';
 import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,6 +17,9 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
   late final MobileScannerController _controller;
   String? _scannedValue;
   bool _isHandlingScan = false;
+  bool _isVerifying = false;
+  String? _verificationMessage;
+  bool _isVerifiedSuccess = false;
 
   @override
   void initState() {
@@ -70,6 +74,33 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _verifyAttendanceQr(String value) async {
+    setState(() {
+      _scannedValue = value;
+      _isVerifying = true;
+      _verificationMessage = null;
+      _isVerifiedSuccess = false;
+    });
+
+    try {
+      final res = await EventService().attendEventByQr(value);
+      if (!mounted) return;
+      setState(() {
+        _isVerifying = false;
+        _isVerifiedSuccess = true;
+        _verificationMessage =
+            res['message']?.toString() ?? 'Presensi kehadiran terverifikasi!';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isVerifying = false;
+        _isVerifiedSuccess = false;
+        _verificationMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
   Future<void> _handleDetection(BarcodeCapture capture) async {
     if (_isHandlingScan || !widget.isActive) return;
 
@@ -82,13 +113,16 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
     _isHandlingScan = true;
     await _controller.stop();
     if (!mounted) return;
-    setState(() => _scannedValue = value);
+    await _verifyAttendanceQr(value);
   }
 
   Future<void> _scanAgain() async {
     setState(() {
       _scannedValue = null;
       _isHandlingScan = false;
+      _isVerifying = false;
+      _verificationMessage = null;
+      _isVerifiedSuccess = false;
     });
     await _startCamera();
   }
@@ -103,7 +137,7 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
             children: [
               Expanded(
                 child: Text(
-                  'Arahkan kamera ke QR tiket',
+                  'Pindai QR Presensi Event Penyelenggara',
                   style: GoogleFonts.montserrat(
                     color: AppColors.white,
                     fontSize: 14,
@@ -220,7 +254,7 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
             _buildScanResult(value)
           else
             Text(
-              'Arahkan kamera ke QR tiket untuk membaca datanya',
+              'Arahkan kamera ke QR Presensi yang ditampilkan penyelenggara event untuk bukti kehadiran.',
               textAlign: TextAlign.center,
               style: GoogleFonts.montserrat(
                 color: AppColors.grey,
@@ -233,39 +267,63 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
   }
 
   Widget _buildScanResult(String value) {
+    final borderColor = _isVerifying
+        ? AppColors.grey2
+        : (_isVerifiedSuccess ? AppColors.accent : AppColors.danger);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.grey3,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.6)),
+        border: Border.all(color: borderColor.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.check_circle_rounded,
-                color: AppColors.accent,
+              Icon(
+                _isVerifying
+                    ? Icons.hourglass_top_rounded
+                    : (_isVerifiedSuccess
+                          ? Icons.check_circle_rounded
+                          : Icons.error_outline_rounded),
+                color: _isVerifiedSuccess ? AppColors.accent : AppColors.danger,
                 size: 20,
               ),
               const SizedBox(width: 8),
-              Text(
-                'QR berhasil terbaca',
-                style: GoogleFonts.montserrat(
-                  color: AppColors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  _isVerifying
+                      ? 'Memverifikasi pendaftaran & pembayaran...'
+                      : (_isVerifiedSuccess
+                            ? 'Presensi Kehadiran Berhasil!'
+                            : 'Presensi Ditolak'),
+                  style: GoogleFonts.montserrat(
+                    color: AppColors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
+          if (_verificationMessage != null)
+            Text(
+              _verificationMessage!,
+              style: GoogleFonts.montserrat(
+                color: _isVerifiedSuccess ? AppColors.accent : AppColors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          const SizedBox(height: 6),
           SelectableText(
             value,
-            style: GoogleFonts.montserrat(color: AppColors.grey, fontSize: 12),
+            style: GoogleFonts.montserrat(color: AppColors.grey, fontSize: 11),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -299,22 +357,26 @@ class _ScanFramePainter extends CustomPainter {
       ..color = AppColors.accent
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.square;
-    const cornerLength = 28.0;
+      ..strokeCap = StrokeCap.round;
 
-    for (final corner in [
-      (frame.topLeft, 1.0, 1.0),
-      (frame.topRight, -1.0, 1.0),
-      (frame.bottomLeft, 1.0, -1.0),
-      (frame.bottomRight, -1.0, -1.0),
-    ]) {
-      final (point, dx, dy) = corner;
-      canvas
-        ..drawLine(point, point.translate(dx * cornerLength, 0), paint)
-        ..drawLine(point, point.translate(0, dy * cornerLength), paint);
-    }
+    const cornerLength = 26.0;
+    final path = Path()
+      ..moveTo(frame.left, frame.top + cornerLength)
+      ..lineTo(frame.left, frame.top)
+      ..lineTo(frame.left + cornerLength, frame.top)
+      ..moveTo(frame.right - cornerLength, frame.top)
+      ..lineTo(frame.right, frame.top)
+      ..lineTo(frame.right, frame.top + cornerLength)
+      ..moveTo(frame.left, frame.bottom - cornerLength)
+      ..lineTo(frame.left, frame.bottom)
+      ..lineTo(frame.left + cornerLength, frame.bottom)
+      ..moveTo(frame.right - cornerLength, frame.bottom)
+      ..lineTo(frame.right, frame.bottom)
+      ..lineTo(frame.right, frame.bottom - cornerLength);
+
+    canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _ScanFramePainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
