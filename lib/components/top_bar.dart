@@ -1,3 +1,4 @@
+import 'package:convena/components/brand_logo.dart';
 import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -166,15 +167,17 @@ class ConvenaTopBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ],
                 )
-              : Text(
-                  title ?? 'Convena',
-                  style: GoogleFonts.montserrat(
-                    color: AppColors.white,
-                    fontSize: 24,
-                    fontWeight: isBrandTitle ? FontWeight.w800 : FontWeight.bold,
-                    letterSpacing: -0.5,
-                  ),
-                )),
+              : (isBrandTitle
+                    ? const ConvenaBrandLogo(markSize: 34, fontSize: 22)
+                    : Text(
+                        title ?? 'Convena',
+                        style: GoogleFonts.montserrat(
+                          color: AppColors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                      ))),
       actions: [
         if (trailing != null)
           Padding(

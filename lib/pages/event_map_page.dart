@@ -56,26 +56,22 @@ class _EventMapPageState extends State<EventMapPage> {
           const EventLocation(
             eventTitle: 'Arkadivia 2026',
             venueName: 'Aula Barat ITB, Bandung',
-            address:
-                'Institut Teknologi Bandung, Jl. Ganesa No. 10, Lb. Siliwangi, Coblong, Kota Bandung',
+            address: 'Institut Teknologi Bandung, Jl. Ganesa No. 10, Lb. Siliwangi, Coblong, Kota Bandung',
             latitude: -6.8915,
             longitude: 107.6107,
             distance: '850 m',
             category: 'competition',
-            imageUrl:
-                'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&q=80',
+            imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&q=80',
           ),
           const EventLocation(
             eventTitle: 'Convena Developer Fest 2026',
             venueName: 'Aula Timur ITB, Bandung',
-            address:
-                'Institut Teknologi Bandung, Jl. Ganesa No. 10, Lb. Siliwangi, Coblong, Kota Bandung',
+            address: 'Institut Teknologi Bandung, Jl. Ganesa No. 10, Lb. Siliwangi, Coblong, Kota Bandung',
             latitude: -6.8906,
             longitude: 107.6119,
             distance: '920 m',
             category: 'seminar',
-            imageUrl:
-                'https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&q=80',
+            imageUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&q=80',
           ),
         ];
 
@@ -277,7 +273,11 @@ class _EventMapPageState extends State<EventMapPage> {
                   //location header
                   const Row(
                     children: [
-                      Icon(Icons.location_on, color: AppColors.accent, size: 15),
+                      Icon(
+                        Icons.location_on,
+                        color: AppColors.accent,
+                        size: 15,
+                      ),
                       SizedBox(width: 4),
                       Text(
                         'ITB Ganesha, Bandung',
@@ -364,7 +364,11 @@ class _EventMapPageState extends State<EventMapPage> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.near_me_rounded, color: AppColors.white, size: 15),
+                    Icon(
+                      Icons.near_me_rounded,
+                      color: AppColors.white,
+                      size: 15,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       'Near me',
@@ -388,30 +392,29 @@ class _EventMapPageState extends State<EventMapPage> {
             child: _filteredEvents.isEmpty
                 ? const SizedBox.shrink()
                 : _filteredEvents.length == 1
-                    ? _buildFloatingEventCard(_filteredEvents.first)
-                    : SizedBox(
-                        height: 94,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: _filteredEvents.length,
-                          onPageChanged: (index) {
-                            final ev = _filteredEvents[index];
-                            setState(() {
-                              _selectedEvent = ev;
-                            });
-                            _mapController.move(ev.coordinates, _defaultZoom);
-                          },
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              child: _buildFloatingEventCard(
-                                _filteredEvents[index],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+                ? _buildFloatingEventCard(_filteredEvents.first)
+                : SizedBox(
+                    height: 94,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: _filteredEvents.length,
+                      onPageChanged: (index) {
+                        final ev = _filteredEvents[index];
+                        setState(() {
+                          _selectedEvent = ev;
+                        });
+                        _mapController.move(ev.coordinates, _defaultZoom);
+                      },
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _buildFloatingEventCard(
+                            _filteredEvents[index],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -484,12 +487,19 @@ class _EventMapPageState extends State<EventMapPage> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, color: AppColors.accent, size: 13),
+                    const Icon(
+                      Icons.location_on,
+                      color: AppColors.accent,
+                      size: 13,
+                    ),
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
                         event.venueName,
-                        style: const TextStyle(color: AppColors.grey, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppColors.grey,
+                          fontSize: 12,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -507,7 +517,10 @@ class _EventMapPageState extends State<EventMapPage> {
                     const SizedBox(width: 4),
                     Text(
                       event.distance,
-                      style: const TextStyle(color: AppColors.grey, fontSize: 12),
+                      style: const TextStyle(
+                        color: AppColors.grey,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -636,7 +649,9 @@ class _EventMapPageState extends State<EventMapPage> {
                 Icon(Icons.home_outlined, color: color, size: 26),
             onTap: () {
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 0)),
+                MaterialPageRoute(
+                  builder: (_) => const HomePage(initialIndex: 0),
+                ),
                 (route) => false,
               );
             },
@@ -657,7 +672,9 @@ class _EventMapPageState extends State<EventMapPage> {
             ),
             onTap: () {
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 1)),
+                MaterialPageRoute(
+                  builder: (_) => const HomePage(initialIndex: 1),
+                ),
                 (route) => false,
               );
             },
@@ -680,7 +697,9 @@ class _EventMapPageState extends State<EventMapPage> {
                 Icon(Icons.person_outline_rounded, color: color, size: 26),
             onTap: () {
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 3)),
+                MaterialPageRoute(
+                  builder: (_) => const HomePage(initialIndex: 3),
+                ),
                 (route) => false,
               );
             },
@@ -706,7 +725,9 @@ class _EventMapPageState extends State<EventMapPage> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.accent.withValues(alpha: 0.2) : AppColors.transparent,
+          color: isActive
+              ? AppColors.accent.withValues(alpha: 0.2)
+              : AppColors.transparent,
           borderRadius: BorderRadius.circular(18),
         ),
         child: customIcon(iconColor),
@@ -772,7 +793,12 @@ class _PinPainter extends CustomPainter {
     if (hasGlow) {
       canvas.drawShadow(path, pinColor.withValues(alpha: 0.85), 10.0, true);
     } else {
-      canvas.drawShadow(path, AppColors.black.withValues(alpha: 0.4), 4.0, true);
+      canvas.drawShadow(
+        path,
+        AppColors.black.withValues(alpha: 0.4),
+        4.0,
+        true,
+      );
     }
 
     final pinPaint = Paint()

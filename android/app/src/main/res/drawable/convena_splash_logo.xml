@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Convena Brand Mark Circle (#151515 with #3D3D3D border) -->
+    <path
+        android:fillColor="#151515"
+        android:strokeColor="#3D3D3D"
+        android:strokeWidth="2.5"
+        android:pathData="M 54,18 A 36,36 0 1,1 54,90 A 36,36 0 1,1 54,18 Z" />
+    <!-- Extra-Bold Geometric "C" in #CFFE06 -->
+    <path
+        android:fillColor="#CFFE06"
+        android:pathData="M 64.53,44.37 A 13.68,13.68 0 1,0 64.53,63.63 L 60.26,59.58 A 7.91,7.91 0 1,1 60.26,48.42 Z" />
+    <!-- Brand Accent Dot at bottom-right in #CFFE06 -->
+    <path
+        android:fillColor="#CFFE06"
+        android:pathData="M 76.0,69.6 A 6.4,6.4 0 1,1 76.0,82.4 A 6.4,6.4 0 1,1 76.0,69.6 Z" />
+</vector>
