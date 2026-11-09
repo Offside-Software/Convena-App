@@ -1,8 +1,10 @@
+import 'package:convena/models/event.dart';
 import 'package:convena/services/event_service.dart';
 import 'package:convena/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
 
 class ScanQrPage extends StatefulWidget {
   final bool isActive;
@@ -15,11 +17,14 @@ class ScanQrPage extends StatefulWidget {
 
 class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
   late final MobileScannerController _controller;
+  final TextEditingController _manualTokenController = TextEditingController();
   String? _scannedValue;
   bool _isHandlingScan = false;
   bool _isVerifying = false;
   String? _verificationMessage;
   bool _isVerifiedSuccess = false;
+  EventRegistration? _verifiedRegistration;
+  String? _verifiedEventTitle;
 
   @override
   void initState() {
@@ -51,6 +56,7 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
+    _manualTokenController.dispose();
     super.dispose();
   }
 
@@ -80,17 +86,63 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
       _isVerifying = true;
       _verificationMessage = null;
       _isVerifiedSuccess = false;
+      _verifiedRegistration = null;
+      _verifiedEventTitle = null;
     });
 
     try {
-      final res = await EventService().attendEventByQr(value);
+      final eventService = context.read<EventService>();
+      final res = await eventService.attendEventByQr(value);
       if (!mounted) return;
+      EventRegistration? reg;
+      if (res['registration'] is Map<String, dynamic>) {
+        reg = EventRegistration.fromJson(
+          res['registration'] as Map<String, dynamic>,
+        );
+      }
+      final msg =
+          res['message']?.toString() ?? 'Presensi kehadiran terverifikasi!';
       setState(() {
         _isVerifying = false;
         _isVerifiedSuccess = true;
-        _verificationMessage =
-            res['message']?.toString() ?? 'Presensi kehadiran terverifikasi!';
+        _verificationMessage = msg;
+        _verifiedRegistration = reg;
+        _verifiedEventTitle = res['eventTitle']?.toString();
       });
+
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF141A05),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: AppColors.accent, width: 1.5),
+          ),
+          content: Row(
+            children: [
+              const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.accent,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  reg != null
+                      ? 'HADIR: ${reg.attendeeName} (${reg.ticketCode})'
+                      : msg,
+                  style: GoogleFonts.montserrat(
+                    color: AppColors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -123,6 +175,8 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
       _isVerifying = false;
       _verificationMessage = null;
       _isVerifiedSuccess = false;
+      _verifiedRegistration = null;
+      _verifiedEventTitle = null;
     });
     await _startCamera();
   }
@@ -207,14 +261,14 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'Kamera tidak dapat dibuka. Pastikan izin kamera aktif di pengaturan perangkat.',
+                                      'Kamera tidak dapat dibuka. Anda tetap dapat memasukkan kode QR Presensi secara langsung di bawah.',
                                       textAlign: TextAlign.center,
                                       style: GoogleFonts.montserrat(
                                         color: AppColors.white,
-                                        fontSize: 13,
+                                        fontSize: 12,
                                       ),
                                     ),
-                                    const SizedBox(height: 14),
+                                    const SizedBox(height: 12),
                                     TextButton.icon(
                                       onPressed: _startCamera,
                                       icon: const Icon(Icons.refresh_rounded),
@@ -249,18 +303,82 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           if (_scannedValue case final value?)
             _buildScanResult(value)
-          else
+          else ...[
             Text(
-              'Arahkan kamera ke QR Presensi yang ditampilkan penyelenggara event untuk bukti kehadiran.',
+              'Arahkan kamera ke QR Presensi penyelenggara atau tempel kode token di bawah:',
               textAlign: TextAlign.center,
               style: GoogleFonts.montserrat(
                 color: AppColors.grey,
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _manualTokenController,
+                    style: GoogleFonts.robotoMono(
+                      color: AppColors.white,
+                      fontSize: 12,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'CONVENA-ATTEND:... atau Token QR',
+                      hintStyle: GoogleFonts.robotoMono(
+                        color: AppColors.grey,
+                        fontSize: 11,
+                      ),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 11,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.grey3,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.grey2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.grey2),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    final code = _manualTokenController.text.trim();
+                    if (code.isNotEmpty) {
+                      _verifyAttendanceQr(code);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: AppColors.black,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 11,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Verifikasi',
+                    style: GoogleFonts.montserrat(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -276,8 +394,11 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.grey3,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor.withValues(alpha: 0.7)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: borderColor.withValues(alpha: 0.8),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,11 +420,11 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
                   _isVerifying
                       ? 'Memverifikasi pendaftaran & pembayaran...'
                       : (_isVerifiedSuccess
-                            ? 'Presensi Kehadiran Berhasil!'
+                            ? 'Presensi Kehadiran Berhasil (Real-Time)!'
                             : 'Presensi Ditolak'),
                   style: GoogleFonts.montserrat(
                     color: AppColors.white,
-                    fontSize: 14,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -320,6 +441,47 @@ class _ScanQrPageState extends State<ScanQrPage> with WidgetsBindingObserver {
                 fontWeight: FontWeight.w500,
               ),
             ),
+          if (_verifiedRegistration != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF141414),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.grey2),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_verifiedEventTitle != null)
+                    Text(
+                      _verifiedEventTitle!,
+                      style: GoogleFonts.montserrat(
+                        color: AppColors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  Text(
+                    '${_verifiedRegistration!.attendeeName} • ${_verifiedRegistration!.ticketCode}',
+                    style: GoogleFonts.montserrat(
+                      color: AppColors.accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Kategori: ${_verifiedRegistration!.tierName} • Status: HADIR (CHECKED-IN)',
+                    style: GoogleFonts.montserrat(
+                      color: AppColors.grey,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 6),
           SelectableText(
             value,
@@ -348,33 +510,79 @@ class _ScanFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const frameSize = 224.0;
-    final frame = Rect.fromCenter(
-      center: size.center(Offset.zero),
-      width: frameSize,
-      height: frameSize,
-    );
-    final paint = Paint()
+    final left = (size.width - frameSize) / 2;
+    final top = (size.height - frameSize) / 2;
+    final rect = Rect.fromLTWH(left, top, frameSize, frameSize);
+
+    final maskPaint = Paint()..color = const Color(0x88000000);
+    final maskPath = Path()
+      ..addRect(Offset.zero & size)
+      ..addRRect(RRect.fromRectAndRadius(rect, const Radius.circular(18)))
+      ..fillType = PathFillType.evenOdd;
+    canvas.drawPath(maskPath, maskPaint);
+
+    final cornerPaint = Paint()
       ..color = AppColors.accent
-      ..strokeWidth = 3
       ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
 
-    const cornerLength = 26.0;
-    final path = Path()
-      ..moveTo(frame.left, frame.top + cornerLength)
-      ..lineTo(frame.left, frame.top)
-      ..lineTo(frame.left + cornerLength, frame.top)
-      ..moveTo(frame.right - cornerLength, frame.top)
-      ..lineTo(frame.right, frame.top)
-      ..lineTo(frame.right, frame.top + cornerLength)
-      ..moveTo(frame.left, frame.bottom - cornerLength)
-      ..lineTo(frame.left, frame.bottom)
-      ..lineTo(frame.left + cornerLength, frame.bottom)
-      ..moveTo(frame.right - cornerLength, frame.bottom)
-      ..lineTo(frame.right, frame.bottom)
-      ..lineTo(frame.right, frame.bottom - cornerLength);
+    const cornerLength = 28.0;
+    const radius = 16.0;
 
-    canvas.drawPath(path, paint);
+    // Top-left
+    canvas.drawPath(
+      Path()
+        ..moveTo(rect.left, rect.top + cornerLength)
+        ..lineTo(rect.left, rect.top + radius)
+        ..arcToPoint(
+          Offset(rect.left + radius, rect.top),
+          radius: const Radius.circular(radius),
+        )
+        ..lineTo(rect.left + cornerLength, rect.top),
+      cornerPaint,
+    );
+
+    // Top-right
+    canvas.drawPath(
+      Path()
+        ..moveTo(rect.right - cornerLength, rect.top)
+        ..lineTo(rect.right - radius, rect.top)
+        ..arcToPoint(
+          Offset(rect.right, rect.top + radius),
+          radius: const Radius.circular(radius),
+        )
+        ..lineTo(rect.right, rect.top + cornerLength),
+      cornerPaint,
+    );
+
+    // Bottom-left
+    canvas.drawPath(
+      Path()
+        ..moveTo(rect.left, rect.bottom - cornerLength)
+        ..lineTo(rect.left, rect.bottom - radius)
+        ..arcToPoint(
+          Offset(rect.left + radius, rect.bottom),
+          radius: const Radius.circular(radius),
+          clockwise: false,
+        )
+        ..lineTo(rect.left + cornerLength, rect.bottom),
+      cornerPaint,
+    );
+
+    // Bottom-right
+    canvas.drawPath(
+      Path()
+        ..moveTo(rect.right - cornerLength, rect.bottom)
+        ..lineTo(rect.right - radius, rect.bottom)
+        ..arcToPoint(
+          Offset(rect.right, rect.bottom - radius),
+          radius: const Radius.circular(radius),
+          clockwise: false,
+        )
+        ..lineTo(rect.right, rect.bottom - cornerLength),
+      cornerPaint,
+    );
   }
 
   @override

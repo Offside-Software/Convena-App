@@ -258,3 +258,121 @@ class Event {
   }
 }
 
+class EventRegistration {
+  final String id;
+  final String eventId;
+  final String userId;
+  final String tierId;
+  final String tierName;
+  final double price;
+  final String paymentMethod;
+  final String paymentStatus;
+  final String status;
+  final String attendeeName;
+  final String attendeeEmail;
+  final String? attendeePhone;
+  final String? attendeeInstitution;
+  final String ticketCode;
+  final DateTime? checkedInAt;
+  final DateTime createdAt;
+
+  const EventRegistration({
+    required this.id,
+    required this.eventId,
+    required this.userId,
+    required this.tierId,
+    required this.tierName,
+    required this.price,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    required this.status,
+    required this.attendeeName,
+    required this.attendeeEmail,
+    this.attendeePhone,
+    this.attendeeInstitution,
+    required this.ticketCode,
+    this.checkedInAt,
+    required this.createdAt,
+  });
+
+  bool get isCheckedIn => status == 'checked_in';
+  bool get isPaid => paymentStatus == 'paid';
+
+  String get formattedPrice {
+    if (price <= 0) return 'GRATIS';
+    final intPrice = price.toInt();
+    final buffer = StringBuffer();
+    final str = intPrice.toString();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+      buffer.write(str[i]);
+    }
+    return 'Rp $buffer';
+  }
+
+  factory EventRegistration.fromJson(Map<String, dynamic> json) {
+    return EventRegistration(
+      id: json['id']?.toString() ?? '',
+      eventId: json['eventId']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      tierId: json['tierId']?.toString() ?? '',
+      tierName: json['tierName']?.toString() ?? 'General Admission',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      paymentMethod: json['paymentMethod']?.toString() ?? 'free',
+      paymentStatus: json['paymentStatus']?.toString() ?? 'paid',
+      status: json['status']?.toString() ?? 'confirmed',
+      attendeeName: json['attendeeName']?.toString() ?? 'Peserta Convena',
+      attendeeEmail: json['attendeeEmail']?.toString() ?? '',
+      attendeePhone: json['attendeePhone']?.toString(),
+      attendeeInstitution: json['attendeeInstitution']?.toString(),
+      ticketCode: json['ticketCode']?.toString() ?? 'TKT-CONVENA',
+      checkedInAt: json['checkedInAt'] != null
+          ? DateTime.tryParse(json['checkedInAt'].toString())
+          : null,
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+    );
+  }
+}
+
+class AttendanceRealtimeEvent {
+  final String eventType;
+  final String eventId;
+  final String eventTitle;
+  final bool alreadyCheckedIn;
+  final String message;
+  final EventRegistration registration;
+  final DateTime timestamp;
+
+  const AttendanceRealtimeEvent({
+    required this.eventType,
+    required this.eventId,
+    required this.eventTitle,
+    required this.alreadyCheckedIn,
+    required this.message,
+    required this.registration,
+    required this.timestamp,
+  });
+
+  factory AttendanceRealtimeEvent.fromJson(Map<String, dynamic> json) {
+    final regMap = json['registration'] is Map<String, dynamic>
+        ? json['registration'] as Map<String, dynamic>
+        : <String, dynamic>{};
+    return AttendanceRealtimeEvent(
+      eventType: json['eventType']?.toString() ?? 'attendance.checked_in',
+      eventId: json['eventId']?.toString() ?? regMap['eventId']?.toString() ?? '',
+      eventTitle: json['eventTitle']?.toString() ?? 'Event Convena',
+      alreadyCheckedIn: json['alreadyCheckedIn'] == true,
+      message: json['message']?.toString() ?? 'Status kehadiran diperbarui',
+      registration: EventRegistration.fromJson(regMap),
+      timestamp:
+          DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
+          DateTime.now(),
+    );
+  }
+}
+
+
